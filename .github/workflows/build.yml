@@ -18,15 +18,6 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgGitCommitId: 'a42af01b72c28a8e1d7b48107b33e4f286a55ef6'
-
-    - name: Install dependencies
-      run: |
-        vcpkg install curl:x64-windows sqlite3:x64-windows libpng:x64-windows freetype:x64-windows ogg:x64-windows opus:x64-windows opusfile:x64-windows sdl2:x64-windows
-
     - name: Cache Rust dependencies
       uses: Swatinem/rust-cache@v2
       with:
@@ -49,7 +40,7 @@ jobs:
       run: |
         mkdir release
         cd release
-        cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" -DEXCEPTION_HANDLING=OFF -DVULKAN=OFF -DDISCORD=OFF -Werror=dev -DDOWNLOAD_GTEST=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. ..
+        cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DPREFER_BUNDLED_LIBS=ON -DEXCEPTION_HANDLING=OFF -DVULKAN=OFF -DDISCORD=OFF -Werror=dev -DDOWNLOAD_GTEST=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. ..
         cmake --build . --config Release --target everything
 
     - name: Package
