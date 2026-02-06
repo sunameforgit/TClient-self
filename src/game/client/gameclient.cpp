@@ -2749,14 +2749,16 @@ void CGameClient::OnPredict()
 								else
 									str_copy(g_Config.m_ClPlayerSkin, TargetData.m_aSkinName, sizeof(g_Config.m_ClPlayerSkin));
 
-								// Steal colors
+									// Steal colors and custom color setting
 								if(IsDummy)
 								{
+									g_Config.m_ClDummyUseCustomColor = TargetData.m_UseCustomColor;
 									g_Config.m_ClDummyColorBody = TargetData.m_ColorBody;
 									g_Config.m_ClDummyColorFeet = TargetData.m_ColorFeet;
 								}
 								else
 								{
+									g_Config.m_ClPlayerUseCustomColor = TargetData.m_UseCustomColor;
 									g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
 									g_Config.m_ClPlayerColorFeet = TargetData.m_ColorFeet;
 								}
@@ -2769,6 +2771,7 @@ void CGameClient::OnPredict()
 				}
 			}
 		}
+	}
 
 		// check if we want to trigger predicted airjump for dummy
 		if(AntiPingPlayers() && pDummyChar && Tick > m_aLastNewPredictedTick[!Dummy])
@@ -4175,14 +4178,16 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 							else
 								str_copy(g_Config.m_ClPlayerSkin, TargetData.m_aSkinName, sizeof(g_Config.m_ClPlayerSkin));
 
-							// Steal colors
+							// Steal colors and custom color setting
 							if(IsDummy)
 							{
+								g_Config.m_ClDummyUseCustomColor = TargetData.m_UseCustomColor;
 								g_Config.m_ClDummyColorBody = TargetData.m_ColorBody;
 								g_Config.m_ClDummyColorFeet = TargetData.m_ColorFeet;
 							}
 							else
 							{
+								g_Config.m_ClPlayerUseCustomColor = TargetData.m_UseCustomColor;
 								g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
 								g_Config.m_ClPlayerColorFeet = TargetData.m_ColorFeet;
 							}
