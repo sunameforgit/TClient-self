@@ -2789,7 +2789,6 @@ void CGameClient::OnPredict()
 				}
 			}
 		}
-	}
 
 		// check if we want to trigger predicted airjump for dummy
 		if(AntiPingPlayers() && pDummyChar && Tick > m_aLastNewPredictedTick[!Dummy])
