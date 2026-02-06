@@ -2753,14 +2753,32 @@ void CGameClient::OnPredict()
 								if(IsDummy)
 								{
 									g_Config.m_ClDummyUseCustomColor = TargetData.m_UseCustomColor;
-									g_Config.m_ClDummyColorBody = TargetData.m_ColorBody;
-									g_Config.m_ClDummyColorFeet = TargetData.m_ColorFeet;
+									// Only copy color values if target uses custom colors, otherwise use default
+									if(TargetData.m_UseCustomColor)
+									{
+										g_Config.m_ClDummyColorBody = TargetData.m_ColorBody;
+										g_Config.m_ClDummyColorFeet = TargetData.m_ColorFeet;
+									}
+									else
+									{
+										g_Config.m_ClDummyColorBody = 65408; // Default color
+										g_Config.m_ClDummyColorFeet = 65408; // Default color
+									}
 								}
 								else
 								{
 									g_Config.m_ClPlayerUseCustomColor = TargetData.m_UseCustomColor;
-									g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
-									g_Config.m_ClPlayerColorFeet = TargetData.m_ColorFeet;
+									// Only copy color values if target uses custom colors, otherwise use default
+									if(TargetData.m_UseCustomColor)
+									{
+										g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
+										g_Config.m_ClPlayerColorFeet = TargetData.m_ColorFeet;
+									}
+									else
+									{
+										g_Config.m_ClPlayerColorBody = 65408; // Default color
+										g_Config.m_ClPlayerColorFeet = 65408; // Default color
+									}
 								}
 
 								// Send updated info to server
@@ -4182,14 +4200,32 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 							if(IsDummy)
 							{
 								g_Config.m_ClDummyUseCustomColor = TargetData.m_UseCustomColor;
-								g_Config.m_ClDummyColorBody = TargetData.m_ColorBody;
-								g_Config.m_ClDummyColorFeet = TargetData.m_ColorFeet;
+								// Only copy color values if target uses custom colors, otherwise use default
+								if(TargetData.m_UseCustomColor)
+								{
+									g_Config.m_ClDummyColorBody = TargetData.m_ColorBody;
+									g_Config.m_ClDummyColorFeet = TargetData.m_ColorFeet;
+								}
+								else
+								{
+									g_Config.m_ClDummyColorBody = 65408; // Default color
+									g_Config.m_ClDummyColorFeet = 65408; // Default color
+								}
 							}
 							else
 							{
 								g_Config.m_ClPlayerUseCustomColor = TargetData.m_UseCustomColor;
-								g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
-								g_Config.m_ClPlayerColorFeet = TargetData.m_ColorFeet;
+								// Only copy color values if target uses custom colors, otherwise use default
+								if(TargetData.m_UseCustomColor)
+								{
+									g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
+									g_Config.m_ClPlayerColorFeet = TargetData.m_ColorFeet;
+								}
+								else
+								{
+									g_Config.m_ClPlayerColorBody = 65408; // Default color
+									g_Config.m_ClPlayerColorFeet = 65408; // Default color
+								}
 							}
 
 							// Send updated info to server
