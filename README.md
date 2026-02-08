@@ -1,8 +1,28 @@
-[![DDraceNetwork](docs/assets/TClient_Logo_Horizontal.svg)](https://tclient.app) 
+[![DDraceNetwork](docs/assets/TClient_Logo_Horizontal.svg)](https://tclient.app)
 
 [![Build status](https://github.com/TaterClient/TClient/workflows/Build/badge.svg)](https://github.com/TaterClient/TClient/actions/workflows/build.yaml)
 <!-- [![Code coverage](https://github.com/TaterClient/TClient/branch/master/graph/badge.svg)](https://codecov.io/gh/TaterClient/TClient/branch/master) -->
 <!-- [![Translation status](https://hosted.weblate.org/widget/ddnet/ddnet/svg-badge.svg)](https://hosted.weblate.org/engage/ddnet/) -->
+
+## ⚠️ 项目说明
+
+本项目是基于 [TaterClient/TClient](https://github.com/TaterClient/TClient) 的修改版本。
+
+**原始项目**: [https://github.com/TaterClient/TClient](https://github.com/TaterClient/TClient)
+
+本项目在原始TClient基础上添加了以下自定义功能：
+- 皮肤窃取功能（锤击/钩子/聊天命令）
+- 表情自动切换功能
+- 其他个性化修改
+
+### 注意事项
+
+1. **本项目仅供学习和个人使用**
+2. **使用风险自负**：修改客户端可能违反某些服务器的规则，请谨慎使用
+3. **不保证稳定性**：基于个人需求修改，可能存在未知bug
+4. **尊重原作者**：TClient的所有核心功能均由TaterClient团队开发，请支持原版
+
+---
 
 ### Taters custom ddnet client with some modifications
 
@@ -88,24 +108,24 @@ Here is a list of states which are available:
 
 | Return type | Call | Description |
 | --- | -- | --- |
-| `string` | `state("game_mode")` | Returns the current game mode name (e.g., “DM”, “TDM”, “CTF”). |
+| `string` | `state("game_mode")` | Returns the current game mode name (e.g., "DM", "TDM", "CTF"). |
 | `bool` | `state("game_mode_pvp")` | Whether the current mode is PvP. |
 | `bool` | `state("game_mode_race")` | Whether the current mode is a race mode. |
-| `bool` | `state("eye_wheel_allowed")` | Whether the “eye wheel” feature is allowed on this server. |
+| `bool` | `state("eye_wheel_allowed")` | Whether the "eye wheel" feature is allowed on this server. |
 | `bool` | `state("zoom_allowed")` | Whether camera zoom is allowed. |
 | `bool` | `state("dummy_allowed")` | Whether using a dummy client is allowed. |
 | `bool` | `state("dummy_connected")` | Whether the dummy client is currently connected. |
 | `bool` | `state("rcon_authed")` | Whether the client is authenticated with RCON (admin access). |
-| `int` | `state("team")` | The player’s current team number. |
-| `int` | `state("ddnet_team")` | The player’s DDNet team number. |
+| `int` | `state("team")` | The player's current team number. |
+| `int` | `state("ddnet_team")` | The player's DDNet team number. |
 | `string` | `state("map")` | The name of the current or connecting map. |
 | `string` | `state("server_ip")` | The IP address of the connected or connecting server. |
 | `int` | `state("players_connected")` | Number of currently connected players. |
 | `int` | `state("players_cap")` | Maximum number of players the server supports. |
-| `string` | `state("server_name")` | The server’s name. |
-| `string` | `state("community")` | The server’s community identifier. |
-| `string` | `state("location")` | The player’s approximate map location (“NW”, “C”, “SE”, etc.). |
-| `string` | `state("state")` | The client’s connection state (e.g., “online”, “offline”, “loading”, “demo”). |
+| `string` | `state("server_name")` | The server's name. |
+| `string` | `state("community")` | The server's community identifier. |
+| `string` | `state("location")` | The player's approximate map location ("NW", "C", "SE", etc.). |
+| `string` | `state("state")` | The client's connection state (e.g., "online", "offline", "loading", "demo"). |
 | `int` | `state("id", string Name)` | Finds and returns a client ID by player name (exact or case-insensitive match). |
 | `string` | `state("name", int Id)` | Returns the name of a player given their client ID. |
 | `string` | `state("clan", int Id)` | Returns the clan name of a player given their client ID. |
@@ -274,3 +294,28 @@ tc_color_freeze_feet
 tc_spec_menu_ID
 tc_limit_mouse_to_screen
 ```
+
+---
+
+## 自定义功能说明
+
+### 皮肤窃取功能
+
+- **锤击窃取**: 启用 `tc_hammer_steal_skin 1`，用锤子击中玩家时自动窃取皮肤
+- **钩子窃取**: 启用 `tc_hook_steal_skin 1`，用钩子钩住玩家时自动窃取皮肤
+- **聊天命令**: 输入 `/stealskin <玩家ID>` 窃取指定玩家皮肤
+
+### 表情自动切换
+
+- **正常↔微笑**: 启用 `tc_auto_emote_toggle 1`
+- **正常↔眯眯眼**: 启用 `tc_auto_blink_toggle 1`
+- 调整间隔: `tc_auto_emote_interval 500` (毫秒)
+
+### 免责声明
+
+本项目修改仅供个人学习和娱乐使用，请遵守游戏服务器的规则。使用修改客户端可能：
+- 被某些服务器封禁
+- 导致游戏不稳定
+- 与其他玩家产生不公平优势
+
+**使用风险自负！**

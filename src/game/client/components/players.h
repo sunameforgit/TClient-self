@@ -60,6 +60,14 @@ public:
 	void OnInit() override;
 	void OnRender() override;
 
+	// TClient: Auto emote toggle
+	int64_t m_LastAutoEmoteTime = 0;
+	int m_LastAutoEmoteType = -1;
+	
+	// TClient: Auto blink toggle
+	int64_t m_LastAutoBlinkTime = 0;
+	int m_LastAutoBlinkType = -1;
+
 	const std::shared_ptr<CManagedTeeRenderInfo> &NinjaTeeRenderInfo() const { return m_pNinjaTeeRenderInfo; }
 	const std::shared_ptr<CManagedTeeRenderInfo> &SpectatorTeeRenderInfo() const { return m_pSpectatorTeeRenderInfo; }
 };

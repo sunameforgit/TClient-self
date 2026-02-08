@@ -2786,6 +2786,7 @@ void CGameClient::OnPredict()
 							}
 						}
 					}
+
 				}
 			}
 		}
@@ -4232,6 +4233,7 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 						}
 					}
 				}
+
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_DAMAGEIND)
 			{

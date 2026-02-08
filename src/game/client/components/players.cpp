@@ -929,6 +929,46 @@ void CPlayers::RenderPlayer(
 		}
 	}
 
+	// TClient: Auto toggle emote between normal and happy
+	// Send emote command to server so other players can see it
+	if(Local && g_Config.m_TcAutoEmoteToggle)
+	{
+		int64_t CurrentTime = time_get();
+		int64_t Interval = time_freq() * g_Config.m_TcAutoEmoteInterval / 1000;
+		int CurrentEmoteType = ((CurrentTime / Interval) % 2 == 0) ? EMOTE_NORMAL : EMOTE_HAPPY;
+		
+		// Only send command if emote type changed and enough time passed
+		if(CurrentEmoteType != m_LastAutoEmoteType && CurrentTime - m_LastAutoEmoteTime >= Interval)
+		{
+			m_LastAutoEmoteTime = CurrentTime;
+			m_LastAutoEmoteType = CurrentEmoteType;
+			
+			const char *pEmoteCmd = (CurrentEmoteType == EMOTE_NORMAL) ? "say /emote normal" : "say /emote happy";
+			Console()->ExecuteLine(pEmoteCmd, IConsole::CLIENT_ID_UNSPECIFIED);
+		}
+	}
+	
+	// TClient: Auto toggle emote between normal and blink
+	// Send emote command to server so other players can see it
+	if(Local && g_Config.m_TcAutoBlinkToggle)
+	{
+		int64_t CurrentTime = time_get();
+		int64_t Interval = time_freq() * g_Config.m_TcAutoBlinkInterval / 1000;
+		int CurrentEmoteType = ((CurrentTime / Interval) % 2 == 0) ? EMOTE_NORMAL : EMOTE_BLINK;
+		
+		// Only send command if emote type changed and enough time passed
+		if(CurrentEmoteType != m_LastAutoBlinkType && CurrentTime - m_LastAutoBlinkTime >= Interval)
+		{
+			m_LastAutoBlinkTime = CurrentTime;
+			m_LastAutoBlinkType = CurrentEmoteType;
+			
+			const char *pEmoteCmd = (CurrentEmoteType == EMOTE_NORMAL) ? "say /emote normal" : "say /emote blink";
+			Console()->ExecuteLine(pEmoteCmd, IConsole::CLIENT_ID_UNSPECIFIED);
+		}
+	}
+	
+	int RenderEmote = Player.m_Emote;
+
 	// render the "shadow" tee
 	if(Local && ((g_Config.m_Debug && g_Config.m_ClUnpredictedShadow >= 0) || g_Config.m_ClUnpredictedShadow == 1))
 	{
@@ -939,10 +979,10 @@ void CPlayers::RenderPlayer(
 				vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
 				Client()->IntraGameTick(g_Config.m_ClDummy));
 
-		RenderTools()->RenderTee(&State, &RenderInfo, Player.m_Emote, Direction, ShadowPosition, 0.5f); // render ghost
+		RenderTools()->RenderTee(&State, &RenderInfo, RenderEmote, Direction, ShadowPosition, 0.5f); // render ghost
 	}
 
-	RenderTools()->RenderTee(&State, &RenderInfo, Player.m_Emote, Direction, Position, Alpha);
+	RenderTools()->RenderTee(&State, &RenderInfo, RenderEmote, Direction, Position, Alpha);
 
 	float TeeAnimScale, TeeBaseSize;
 	CRenderTools::GetRenderTeeAnimScaleAndBaseSize(&RenderInfo, TeeAnimScale, TeeBaseSize);

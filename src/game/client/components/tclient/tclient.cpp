@@ -1,4 +1,4 @@
-﻿#include "tclient.h"
+#include "tclient.h"
 
 #include "data_version.h"
 
@@ -11,6 +11,7 @@
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 #include <engine/shared/json.h>
+#include <engine/shared/protocol.h>
 
 #include <generated/client_data.h>
 
@@ -313,6 +314,25 @@ bool CTClient::ChatDoSpecId(const char *pInput)
 	return true;
 }
 
+bool CTClient::ChatDoStealSkin(const char *pInput)
+{
+	const char *pNumber = str_startswith_nocase(pInput, "/stealskin ");
+	if(!pNumber)
+		return false;
+
+	const int Length = str_length(pInput);
+	CChat::CHistoryEntry *pEntry = GameClient()->m_Chat.m_History.Allocate(sizeof(CChat::CHistoryEntry) + Length);
+	pEntry->m_Team = 0;
+	str_copy(pEntry->m_aText, pInput, Length + 1);
+
+	int TargetId = 0;
+	if(!str_toint(pNumber, &TargetId))
+		return true;
+
+	StealSkin(TargetId);
+	return true;
+}
+
 void CTClient::SpecId(int ClientId)
 {
 	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
@@ -335,6 +355,38 @@ void CTClient::SpecId(int ClientId)
 	str_escape(&pDst, Player.m_aName, aBuf + sizeof(aBuf));
 	str_append(aBuf, "\"");
 	GameClient()->m_Chat.SendChat(0, aBuf);
+}
+
+void CTClient::StealSkin(int TargetId)
+{
+	if(Client()->State() != IClient::STATE_ONLINE)
+		return;
+
+	if(TargetId < 0 || TargetId >= MAX_CLIENTS)
+		return;
+
+	const CGameClient::CClientData &TargetData = GameClient()->m_aClients[TargetId];
+	if(!TargetData.m_Active)
+		return;
+
+	// Steal skin name for main player
+	str_copy(g_Config.m_ClPlayerSkin, TargetData.m_aSkinName, sizeof(g_Config.m_ClPlayerSkin));
+
+	// Steal colors and custom color setting
+	g_Config.m_ClPlayerUseCustomColor = TargetData.m_UseCustomColor;
+	if(TargetData.m_UseCustomColor)
+	{
+		g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
+		g_Config.m_ClPlayerColorFeet = TargetData.m_ColorFeet;
+	}
+	else
+	{
+		g_Config.m_ClPlayerColorBody = 65408; // Default color
+		g_Config.m_ClPlayerColorFeet = 65408; // Default color
+	}
+
+	// Send updated info to server
+	GameClient()->SendInfo(false);
 }
 
 void CTClient::ConEmoteCycle(IConsole::IResult *pResult, void *pUserData)
