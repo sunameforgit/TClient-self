@@ -931,7 +931,8 @@ void CPlayers::RenderPlayer(
 
 	// TClient: Auto toggle emote between normal and happy
 	// Send emote command to server so other players can see it
-	if(Local && g_Config.m_TcAutoEmoteToggle)
+	// Skip if chat is active to avoid delaying chat messages
+	if(Local && g_Config.m_TcAutoEmoteToggle && !GameClient()->m_Chat.IsActive())
 	{
 		int64_t CurrentTime = time_get();
 		int64_t Interval = time_freq() * g_Config.m_TcAutoEmoteInterval / 1000;
@@ -950,7 +951,8 @@ void CPlayers::RenderPlayer(
 	
 	// TClient: Auto toggle emote between normal and blink
 	// Send emote command to server so other players can see it
-	if(Local && g_Config.m_TcAutoBlinkToggle)
+	// Skip if chat is active to avoid delaying chat messages
+	if(Local && g_Config.m_TcAutoBlinkToggle && !GameClient()->m_Chat.IsActive())
 	{
 		int64_t CurrentTime = time_get();
 		int64_t Interval = time_freq() * g_Config.m_TcAutoBlinkInterval / 1000;
