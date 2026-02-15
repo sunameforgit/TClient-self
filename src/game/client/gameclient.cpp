@@ -1452,6 +1452,49 @@ void CGameClient::ProcessEvents()
 			if(!m_PredictedWorld.CheckPredictedEventHandled(CGameWorld::CPredictedEvent(Item.m_Type, HammerHitPos, -1, Client()->GameTick(g_Config.m_ClDummy))))
 			{
 				m_Effects.HammerHit(HammerHitPos, Alpha, Volume);
+
+				// Hammer skin steal feature - only trigger on actual network events
+				if(g_Config.m_TcHammerStealSkin)
+				{
+					// Get attacker from the snap
+					int AttackerId = -1;
+					int TargetId = -1;
+
+					// Find the local client ID (attacker)
+					if(m_Snap.m_LocalClientId >= 0)
+					{
+						AttackerId = m_Snap.m_LocalClientId;
+					}
+
+					// Search for a player near the hammer hit position
+					if(AttackerId >= 0)
+					{
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(i == AttackerId)
+								continue;
+
+							const CClientData &PotentialTarget = m_aClients[i];
+							if(PotentialTarget.m_Active)
+							{
+								// Use current position for simplicity
+								vec2 TargetPos = PotentialTarget.m_Predicted.m_Pos;
+								float Dist = distance(HammerHitPos, TargetPos);
+								if(Dist < 32.0f) // Within hammer range
+								{
+									TargetId = i;
+									break;
+								}
+							}
+						}
+					}
+
+					// Steal skin if we found a target and we are the attacker
+					if(TargetId >= 0 && AttackerId == m_Snap.m_LocalClientId)
+					{
+						m_TClient.StealSkin(TargetId);
+					}
+				}
 			}
 		}
 		else if(Item.m_Type == NETEVENTTYPE_BIRTHDAY)
@@ -4130,45 +4173,6 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_HAMMERHIT)
 			{
 				m_Effects.HammerHit(EventsIterator->m_Pos, Alpha, Volume);
-
-				// Hammer skin steal feature
-				if(g_Config.m_TcHammerStealSkin)
-				{
-					int AttackerId = EventsIterator->m_ExtraInfo;
-					int TargetId = -1;
-
-					// If no target in event, try to find a target near the hit position
-					if(TargetId < 0 && AttackerId >= 0)
-					{
-						// Search for a player near the hammer hit position
-						vec2 HitPos = EventsIterator->m_Pos;
-						int CurrentTick = Client()->GameTick(g_Config.m_ClDummy);
-						for(int i = 0; i < MAX_CLIENTS; i++)
-						{
-							if(i == AttackerId)
-								continue;
-
-							const CClientData &PotentialTarget = m_aClients[i];
-							// Check if we have recent prediction data for this player
-							if(PotentialTarget.m_Active && PotentialTarget.m_aPredTick[CurrentTick % 200] == CurrentTick)
-							{
-								vec2 PredPos = PotentialTarget.m_aPredPos[CurrentTick % 200];
-								float Dist = distance(HitPos, PredPos);
-								if(Dist < 32.0f) // Within hammer range
-								{
-									TargetId = i;
-									break;
-								}
-							}
-						}
-					}
-
-					// Steal skin if we found a target
-					if(TargetId >= 0 && AttackerId == m_Snap.m_LocalClientId)
-					{
-						m_TClient.StealSkin(TargetId);
-					}
-				}
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_DAMAGEIND)
 			{
