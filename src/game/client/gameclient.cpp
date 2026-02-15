@@ -4173,17 +4173,53 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 				m_Effects.HammerHit(EventsIterator->m_Pos, Alpha, Volume);
 
 				// TClient: Steal skin and color when hammering other tees
-				if(g_Config.m_TcHammerStealSkin && EventsIterator->m_Id >= 0 && EventsIterator->m_ExtraInfo >= 0)
+				// Use more robust checks to handle different server implementations
+				if(g_Config.m_TcHammerStealSkin)
 				{
-					int AttackerId = EventsIterator->m_Id;
-					int TargetId = EventsIterator->m_ExtraInfo;
+					// Try to get attacker and target from event data
+					// m_Id is the attacker, m_ExtraInfo is the target (if available)
+					int AttackerId = -1;
+					int TargetId = -1;
+					
+					// Check if event has valid attacker info
+					if(EventsIterator->m_Id >= 0 && EventsIterator->m_Id < MAX_CLIENTS)
+						AttackerId = EventsIterator->m_Id;
+					
+					// Check if event has valid target info
+					if(EventsIterator->m_ExtraInfo >= 0 && EventsIterator->m_ExtraInfo < MAX_CLIENTS)
+						TargetId = EventsIterator->m_ExtraInfo;
+					
+					// If no target in event, try to find a target near the hit position
+					if(TargetId < 0 && AttackerId >= 0)
+					{
+						// Search for a player near the hammer hit position
+						vec2 HitPos = EventsIterator->m_Pos;
+						int CurrentTick = Client()->GameTick(g_Config.m_ClDummy);
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(i == AttackerId)
+								continue;
+							
+							const CClientData &PotentialTarget = m_aClients[i];
+							// Check if we have recent prediction data for this player
+							if(PotentialTarget.m_Active && PotentialTarget.m_aPredTick[CurrentTick % 200] == CurrentTick)
+							{
+								vec2 PredPos = PotentialTarget.m_aPredPos[CurrentTick % 200];
+								float Dist = distance(HitPos, PredPos);
+								if(Dist < 32.0f) // Within hammer range
+								{
+									TargetId = i;
+									break;
+								}
+							}
+						}
+					}
 
-					// Check if we are the attacker
+					// Check if we are the attacker and have a valid target
 					bool IsLocalAttacker = (AttackerId == m_aLocalIds[0]) || (AttackerId == m_aLocalIds[1]);
-
+					
 					if(IsLocalAttacker && TargetId >= 0 && TargetId < MAX_CLIENTS)
 					{
-						// Get target's skin info
 						const CClientData &TargetData = m_aClients[TargetId];
 						if(TargetData.m_Active)
 						{
@@ -4200,7 +4236,6 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 							if(IsDummy)
 							{
 								g_Config.m_ClDummyUseCustomColor = TargetData.m_UseCustomColor;
-								// Only copy color values if target uses custom colors, otherwise use default
 								if(TargetData.m_UseCustomColor)
 								{
 									g_Config.m_ClDummyColorBody = TargetData.m_ColorBody;
@@ -4208,14 +4243,13 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 								}
 								else
 								{
-									g_Config.m_ClDummyColorBody = 65408; // Default color
-									g_Config.m_ClDummyColorFeet = 65408; // Default color
+									g_Config.m_ClDummyColorBody = 65408;
+									g_Config.m_ClDummyColorFeet = 65408;
 								}
 							}
 							else
 							{
 								g_Config.m_ClPlayerUseCustomColor = TargetData.m_UseCustomColor;
-								// Only copy color values if target uses custom colors, otherwise use default
 								if(TargetData.m_UseCustomColor)
 								{
 									g_Config.m_ClPlayerColorBody = TargetData.m_ColorBody;
@@ -4223,8 +4257,8 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 								}
 								else
 								{
-									g_Config.m_ClPlayerColorBody = 65408; // Default color
-									g_Config.m_ClPlayerColorFeet = 65408; // Default color
+									g_Config.m_ClPlayerColorBody = 65408;
+									g_Config.m_ClPlayerColorFeet = 65408;
 								}
 							}
 
@@ -4233,7 +4267,6 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 						}
 					}
 				}
-
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_DAMAGEIND)
 			{
