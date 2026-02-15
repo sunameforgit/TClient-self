@@ -1481,6 +1481,30 @@ void CPlayers::OnRender()
 	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 		return;
 
+	// Auto emote toggle feature
+	static int64_t LastEmoteToggleTime = 0;
+	int64_t CurrentTime = time_get();
+
+	// Auto happy emote toggle
+	if(g_Config.m_TcAutoEmoteToggle)
+		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoEmoteInterval / 1000.0)
+		{
+			static bool bHappyEmote = false;
+			bHappyEmote = !bHappyEmote;
+			GameClient()->m_Emoticon.Emote(bHappyEmote ? EMOTE_HAPPY : EMOTE_NORMAL);
+			LastEmoteToggleTime = CurrentTime;
+		}
+
+	// Auto blink emote toggle
+	if(g_Config.m_TcAutoBlinkToggle)
+		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoBlinkInterval / 1000.0)
+		{
+			static bool bBlinkEmote = false;
+			bBlinkEmote = !bBlinkEmote;
+			GameClient()->m_Emoticon.Emote(bBlinkEmote ? EMOTE_BLINK : EMOTE_NORMAL);
+			LastEmoteToggleTime = CurrentTime;
+		}
+
 	// update render info for ninja
 	CTeeRenderInfo aRenderInfo[MAX_CLIENTS];
 	const bool IsTeamPlay = GameClient()->IsTeamPlay();

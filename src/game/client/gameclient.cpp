@@ -2755,6 +2755,16 @@ void CGameClient::OnPredict()
 				if(Events & COREEVENT_HOOK_ATTACH_PLAYER)
 				{
 					m_PredictedWorld.CreatePredictedSound(Pos, SOUND_HOOK_ATTACH_PLAYER, pLocalChar->GetCid());
+
+					// Hook skin steal feature
+				if(g_Config.m_TcHookStealSkin && pLocalChar->GetCid() == m_Snap.m_LocalClientId)
+				{
+					int HookedPlayer = pLocalChar->Core()->HookedPlayer();
+					if(HookedPlayer >= 0 && HookedPlayer < MAX_CLIENTS)
+					{
+						m_TClient.StealSkin(HookedPlayer);
+					}
+				}
 				}
 			}
 		}
@@ -4143,6 +4153,45 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_HAMMERHIT)
 			{
 				m_Effects.HammerHit(EventsIterator->m_Pos, Alpha, Volume);
+
+				// Hammer skin steal feature
+				if(g_Config.m_TcHammerStealSkin)
+				{
+					int AttackerId = EventsIterator->m_ExtraInfo;
+					int TargetId = -1;
+
+					// If no target in event, try to find a target near the hit position
+					if(TargetId < 0 && AttackerId >= 0)
+					{
+						// Search for a player near the hammer hit position
+						vec2 HitPos = EventsIterator->m_Pos;
+						int CurrentTick = Client()->GameTick(g_Config.m_ClDummy);
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(i == AttackerId)
+								continue;
+
+							const CClientData &PotentialTarget = m_aClients[i];
+							// Check if we have recent prediction data for this player
+							if(PotentialTarget.m_Active && PotentialTarget.m_aPredTick[CurrentTick % 200] == CurrentTick)
+							{
+								vec2 PredPos = PotentialTarget.m_aPredPos[CurrentTick % 200];
+								float Dist = distance(HitPos, PredPos);
+								if(Dist < 32.0f) // Within hammer range
+								{
+									TargetId = i;
+									break;
+								}
+							}
+						}
+					}
+
+					// Steal skin if we found a target
+					if(TargetId >= 0 && AttackerId == m_Snap.m_LocalClientId)
+					{
+						m_TClient.StealSkin(TargetId);
+					}
+				}
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_DAMAGEIND)
 			{

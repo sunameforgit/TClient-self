@@ -481,10 +481,27 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 		DropDownRect.VSplitLeft(120.0f, &Label, &DropDownRect);
 		Ui()->DoLabel(&Label, TCLocalize("Hammer Mode: "), FontSize, TEXTALIGN_ML);
 		g_Config.m_TcHammerRotatesWithCursor = Ui()->DoDropDown(&DropDownRect, g_Config.m_TcHammerRotatesWithCursor, s_DropDownNames.data(), s_DropDownNames.size(), s_DropDownState);
-		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
-	}
+	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+}
 
+DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHammerStealSkin, TCLocalize("Skin Steal (Hammer)"), &g_Config.m_TcHammerStealSkin, &Column, LineSize);
+DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHookStealSkin, TCLocalize("Skin Steal (Hook)"), &g_Config.m_TcHookStealSkin, &Column, LineSize);
+
+DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Auto Happy Emote"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
+if(g_Config.m_TcAutoEmoteToggle)
+{
 	Column.HSplitTop(LineSize, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("Emote toggle interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
+}
+
+DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoBlinkToggle, TCLocalize("Auto Blink Emote"), &g_Config.m_TcAutoBlinkToggle, &Column, LineSize);
+if(g_Config.m_TcAutoBlinkToggle)
+{
+	Column.HSplitTop(LineSize, &Button, &Column);
+	Ui()->DoScrollbarOption(&g_Config.m_TcAutoBlinkInterval, &g_Config.m_TcAutoBlinkInterval, &Button, TCLocalize("Blink toggle interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
+}
+
+Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_TcCursorScale, &g_Config.m_TcCursorScale, &Button, TCLocalize("Ingame cursor scale"), 0, 500, &CUi::ms_LinearScrollbarScale, 0, "%");
 
 	Column.HSplitTop(LineSize, &Button, &Column);
