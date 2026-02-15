@@ -331,7 +331,11 @@ void CCharacter::FireWeapon()
 				continue;
 
 			// Hammer skin steal - trigger immediately during prediction for local player
-			if(g_Config.m_TcHammerStealSkin && GetCid() == GameWorld()->m_pGameClient->m_Snap.m_LocalClientId)
+			// Only trigger when we actually hit someone with hammer
+			if(g_Config.m_TcHammerStealSkin && 
+			   GameWorld()->m_pGameClient && 
+			   GetCid() == GameWorld()->m_pGameClient->m_Snap.m_LocalClientId &&
+			   m_Core.m_ActiveWeapon == WEAPON_HAMMER)
 			{
 				GameWorld()->m_pGameClient->m_TClient.StealSkin(pTarget->GetCid());
 			}
