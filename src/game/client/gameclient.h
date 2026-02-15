@@ -3,6 +3,9 @@
 #ifndef GAME_CLIENT_GAMECLIENT_H
 #define GAME_CLIENT_GAMECLIENT_H
 
+// Fast input helper macro (converts integer config to float, value is divided by 10)
+#define FAST_INPUT_AMOUNT (g_Config.m_TcFastInput / 10.0f)
+
 #include "render.h"
 
 #include <base/color.h>

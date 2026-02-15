@@ -570,14 +570,17 @@ Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoLabel(&Label, TCLocalize("Input"), HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInput, TCLocalize("Fast Input (reduced visual delay)"), &g_Config.m_TcFastInput, &Column, LineSize);
-
-	Column.HSplitTop(LineSize, &Button, &Column);
-	DoSliderWithScaledValue(&g_Config.m_TcFastInputAmount, &g_Config.m_TcFastInputAmount, &Button, TCLocalize("Amount"), 1, 40, 1, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, "ms");
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInput, TCLocalize("Fast Inputs (-20ms visual delay)"), &g_Config.m_TcFastInput, &Column, LineSize);
+	if(g_Config.m_TcFastInput > 0)
+	{
+		CUIRect Slider;
+		Column.HSplitTop(LineSize, &Slider, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_TcFastInput, &g_Config.m_TcFastInput, &Slider, TCLocalize("Fast Input Amount"), 0, 50, &CUi::ms_LinearScrollbarScale, 0, " (x0.1)");
+	}
 
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
-	if(g_Config.m_TcFastInput)
-		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInputOthers, TCLocalize("Fast Input others"), &g_Config.m_TcFastInputOthers, &Column, LineSize);
+	if(g_Config.m_TcFastInput > 0)
+		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInputOthers, TCLocalize("Extra tick other tees (increases other tees latency, \nmakes dragging slightly easier when using fast input)"), &g_Config.m_TcFastInputOthers, &Column, LineSize);
 	else
 		Column.HSplitTop(LineSize, nullptr, &Column);
 	// A little extra spacing because these are multi line
