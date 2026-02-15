@@ -484,17 +484,17 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	}
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHammerStealSkin, TCLocalize("Steal skin on hammer hit"), &g_Config.m_TcHammerStealSkin, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHookStealSkin, TCLocalize("Steal skin on hook attach"), &g_Config.m_TcHookStealSkin, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHammerStealSkin, TCLocalize("Skin Steal (Hammer)"), &g_Config.m_TcHammerStealSkin, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHookStealSkin, TCLocalize("Skin Steal (Hook)"), &g_Config.m_TcHookStealSkin, &Column, LineSize);
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Auto toggle emote"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Auto Happy Emote"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
 	if(g_Config.m_TcAutoEmoteToggle)
 	{
 		Column.HSplitTop(LineSize, &Button, &Column);
 		Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("Emote toggle interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
 	}
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoBlinkToggle, TCLocalize("Auto toggle blink"), &g_Config.m_TcAutoBlinkToggle, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoBlinkToggle, TCLocalize("Auto Blink Emote"), &g_Config.m_TcAutoBlinkToggle, &Column, LineSize);
 	if(g_Config.m_TcAutoBlinkToggle)
 	{
 		Column.HSplitTop(LineSize, &Button, &Column);
