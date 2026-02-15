@@ -270,6 +270,7 @@ void CPlayers::RenderHookCollLine(
 	// simulate the hook into the future
 	int HookTick;
 	bool HookEnteredTelehook = false;
+	std::optional<IGraphics::CLineItem> HookTipLineSegment;
 	for(HookTick = 0; HookTick < MaxHookTicks; ++HookTick)
 	{
 		int Tele;
@@ -283,7 +284,6 @@ void CPlayers::RenderHookCollLine(
 			if(!HookEnteredTelehook)
 			{
 				vec2 RetractingHookEndPos = BasePos + normalize(SegmentEndPos - BasePos) * HookLength;
-
 				// you can't hook a player, if the hook is behind solids, however you miss the solids as well
 				int Hit = Collision()->IntersectLineTeleHook(SegmentStartPos, RetractingHookEndPos, &HitPos, nullptr, &Tele);
 
@@ -298,8 +298,15 @@ void CPlayers::RenderHookCollLine(
 				{
 					// The hook misses the player, but also misses the solid
 					vLineSegments.emplace_back(LineStartPos, SegmentStartPos);
+
+					// The player hook misses due to a solid
+					HookTipLineSegment = IGraphics::CLineItem(SegmentStartPos, HitPos);
 					break;
 				}
+
+				// we are missing the player, the solid hookline stopped already, but we want this extra line segment
+				// the player-hooking-hook is only longer, if we didn't go through a tele hook
+				HookTipLineSegment = IGraphics::CLineItem(SegmentStartPos, RetractingHookEndPos);
 			}
 
 			// the line is too long here, and the hook retracts, use old position
@@ -410,8 +417,7 @@ void CPlayers::RenderHookCollLine(
 		float LineWidth = 0.5f + (float)(HookCollSize - 1) * 0.25f;
 		const vec2 PerpToAngle = normalize(vec2(Direction.y, -Direction.x)) * GameClient()->m_Camera.m_Zoom;
 
-		for(const auto &LineSegment : vLineSegments)
-		{
+		auto ConvertLineSegments = [&](const IGraphics::CLineItem &LineSegment) {
 			vec2 DrawInitPos(LineSegment.m_X0, LineSegment.m_Y0);
 			vec2 DrawFinishPos(LineSegment.m_X1, LineSegment.m_Y1);
 			vec2 Pos0 = DrawFinishPos + PerpToAngle * -LineWidth;
@@ -419,10 +425,27 @@ void CPlayers::RenderHookCollLine(
 			vec2 Pos2 = DrawInitPos + PerpToAngle * -LineWidth;
 			vec2 Pos3 = DrawInitPos + PerpToAngle * LineWidth;
 			vLineQuadSegments.emplace_back(Pos0.x, Pos0.y, Pos1.x, Pos1.y, Pos2.x, Pos2.y, Pos3.x, Pos3.y);
+		};
+
+		for(const auto &LineSegment : vLineSegments)
+		{
+			ConvertLineSegments(LineSegment);
 		}
+
+		vLineSegments.clear();
+
 		Graphics()->QuadsBegin();
 		Graphics()->SetColor(HookCollColor.WithAlpha(Alpha));
 		Graphics()->QuadsDrawFreeform(vLineQuadSegments.data(), vLineQuadSegments.size());
+		if(HookTipLineSegment.has_value() && g_Config.m_TcRevertHookLine != 1 /*TClient*/)
+		{
+			vLineQuadSegments.clear();
+			ConvertLineSegments(HookTipLineSegment.value());
+			if (g_Config.m_TcRevertHookLine != 2) // TClient
+				HookCollColor = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClHookCollColorTeeColl));
+			Graphics()->SetColor(HookCollColor.WithAlpha(Alpha));
+			Graphics()->QuadsDrawFreeform(vLineQuadSegments.data(), vLineQuadSegments.size());
+		}
 		Graphics()->QuadsEnd();
 	}
 	else
@@ -430,6 +453,13 @@ void CPlayers::RenderHookCollLine(
 		Graphics()->LinesBegin();
 		Graphics()->SetColor(HookCollColor.WithAlpha(Alpha));
 		Graphics()->LinesDraw(vLineSegments.data(), vLineSegments.size());
+		if (HookTipLineSegment.has_value() && g_Config.m_TcRevertHookLine != 1 /*TClient*/)
+		{
+			if (g_Config.m_TcRevertHookLine != 2) // TClient
+				HookCollColor = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClHookCollColorTeeColl));
+			Graphics()->SetColor(HookCollColor.WithAlpha(Alpha));
+			Graphics()->LinesDraw(&HookTipLineSegment.value(), 1);
+		}
 		Graphics()->LinesEnd();
 	}
 }
@@ -929,48 +959,6 @@ void CPlayers::RenderPlayer(
 		}
 	}
 
-	// TClient: Auto toggle emote between normal and happy
-	// Send emote command to server so other players can see it
-	// Skip if chat is active to avoid delaying chat messages
-	if(Local && g_Config.m_TcAutoEmoteToggle && !GameClient()->m_Chat.IsActive())
-	{
-		int64_t CurrentTime = time_get();
-		int64_t Interval = time_freq() * g_Config.m_TcAutoEmoteInterval / 1000;
-		int CurrentEmoteType = ((CurrentTime / Interval) % 2 == 0) ? EMOTE_NORMAL : EMOTE_HAPPY;
-		
-		// Only send command if emote type changed and enough time passed
-		if(CurrentEmoteType != m_LastAutoEmoteType && CurrentTime - m_LastAutoEmoteTime >= Interval)
-		{
-			m_LastAutoEmoteTime = CurrentTime;
-			m_LastAutoEmoteType = CurrentEmoteType;
-			
-			const char *pEmoteCmd = (CurrentEmoteType == EMOTE_NORMAL) ? "say /emote normal" : "say /emote happy";
-			Console()->ExecuteLine(pEmoteCmd, IConsole::CLIENT_ID_UNSPECIFIED);
-		}
-	}
-	
-	// TClient: Auto toggle emote between normal and blink
-	// Send emote command to server so other players can see it
-	// Skip if chat is active to avoid delaying chat messages
-	if(Local && g_Config.m_TcAutoBlinkToggle && !GameClient()->m_Chat.IsActive())
-	{
-		int64_t CurrentTime = time_get();
-		int64_t Interval = time_freq() * g_Config.m_TcAutoBlinkInterval / 1000;
-		int CurrentEmoteType = ((CurrentTime / Interval) % 2 == 0) ? EMOTE_NORMAL : EMOTE_BLINK;
-		
-		// Only send command if emote type changed and enough time passed
-		if(CurrentEmoteType != m_LastAutoBlinkType && CurrentTime - m_LastAutoBlinkTime >= Interval)
-		{
-			m_LastAutoBlinkTime = CurrentTime;
-			m_LastAutoBlinkType = CurrentEmoteType;
-			
-			const char *pEmoteCmd = (CurrentEmoteType == EMOTE_NORMAL) ? "say /emote normal" : "say /emote blink";
-			Console()->ExecuteLine(pEmoteCmd, IConsole::CLIENT_ID_UNSPECIFIED);
-		}
-	}
-	
-	int RenderEmote = Player.m_Emote;
-
 	// render the "shadow" tee
 	if(Local && ((g_Config.m_Debug && g_Config.m_ClUnpredictedShadow >= 0) || g_Config.m_ClUnpredictedShadow == 1))
 	{
@@ -981,10 +969,10 @@ void CPlayers::RenderPlayer(
 				vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
 				Client()->IntraGameTick(g_Config.m_ClDummy));
 
-		RenderTools()->RenderTee(&State, &RenderInfo, RenderEmote, Direction, ShadowPosition, 0.5f); // render ghost
+		RenderTools()->RenderTee(&State, &RenderInfo, Player.m_Emote, Direction, ShadowPosition, 0.5f); // render ghost
 	}
 
-	RenderTools()->RenderTee(&State, &RenderInfo, RenderEmote, Direction, Position, Alpha);
+	RenderTools()->RenderTee(&State, &RenderInfo, Player.m_Emote, Direction, Position, Alpha);
 
 	float TeeAnimScale, TeeBaseSize;
 	CRenderTools::GetRenderTeeAnimScaleAndBaseSize(&RenderInfo, TeeAnimScale, TeeBaseSize);
@@ -1513,6 +1501,9 @@ void CPlayers::OnRender()
 				aRenderInfo[i].m_TeeRenderFlags |= TEE_EFFECT_SPARKLE;
 
 			Frozen = GameClient()->m_aClients[i].m_Predicted.m_FreezeEnd != 0;
+			// TClient
+			if(g_Config.m_TcFastInputAmount > 20 && g_Config.m_TcFastInput)
+				Frozen = GameClient()->m_aClients[i].m_PrevPredicted.m_FreezeEnd != 0;
 		}
 		else
 		{
@@ -1527,7 +1518,7 @@ void CPlayers::OnRender()
 		}
 
 		// TClient
-		if(g_Config.m_TcFreezeKatana > 0 && GameClient()->m_aClients[i].m_Predicted.m_FreezeEnd != 0)
+		if(g_Config.m_TcFrozenKatana > 0 && Frozen)
 		{
 			GameClient()->m_aClients[i].m_RenderCur.m_Weapon = WEAPON_NINJA;
 			aRenderInfo[i].m_TeeRenderFlags &= ~TEE_NO_WEAPON;

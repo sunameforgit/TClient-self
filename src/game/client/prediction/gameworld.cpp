@@ -850,13 +850,8 @@ bool CGameWorld::CheckPredictedEventHandled(const CPredictedEvent &CheckEvent)
 		m_PredictedEvents.begin(),
 		m_PredictedEvents.end(),
 		[CheckEvent](const CPredictedEvent &Event) {
-			bool BasicMatch = Event.m_Handled == true && Event.m_EventId == CheckEvent.m_EventId &&
-			       Event.m_Pos == CheckEvent.m_Pos && Event.m_Tick <= CheckEvent.m_Tick;
-			// For hammer hit events, ignore m_ExtraInfo comparison because server events don't have TargetId
-			// but predicted events store TargetId in m_ExtraInfo for skin steal functionality
-			if(Event.m_EventId == NETEVENTTYPE_HAMMERHIT)
-				return BasicMatch;
-			return BasicMatch && Event.m_ExtraInfo == CheckEvent.m_ExtraInfo;
+			return Event.m_Handled == true && Event.m_EventId == CheckEvent.m_EventId &&
+			       Event.m_Pos == CheckEvent.m_Pos && Event.m_Tick <= CheckEvent.m_Tick && Event.m_ExtraInfo == CheckEvent.m_ExtraInfo;
 		});
 
 	if(It == m_PredictedEvents.end())
@@ -884,9 +879,9 @@ void CGameWorld::CreatePredictedExplosionEvent(vec2 Pos, int Id)
 	CreatePredictedEvent(Event);
 }
 
-void CGameWorld::CreatePredictedHammerHitEvent(vec2 Pos, int Id, int TargetId)
+void CGameWorld::CreatePredictedHammerHitEvent(vec2 Pos, int Id)
 {
-	CPredictedEvent Event(NETEVENTTYPE_HAMMERHIT, Pos, Id, GameTick(), TargetId);
+	CPredictedEvent Event(NETEVENTTYPE_HAMMERHIT, Pos, Id, GameTick());
 	CreatePredictedEvent(Event);
 }
 

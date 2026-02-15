@@ -274,8 +274,6 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			; // Do nothing as bindchat was executed
 		else if(GameClient()->m_TClient.ChatDoSpecId(m_Input.GetString()))
 			; // Do nothing as specid was executed
-		else if(GameClient()->m_TClient.ChatDoStealSkin(m_Input.GetString()))
-			; // Do nothing as stealskin was executed
 		else
 			SendChatQueued(m_Input.GetString());
 		m_pHistoryEntry = nullptr;
