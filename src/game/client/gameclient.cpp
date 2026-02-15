@@ -1449,40 +1449,68 @@ void CGameClient::ProcessEvents()
 			const CNetEvent_HammerHit *pEvent = (const CNetEvent_HammerHit *)Item.m_pData;
 
 			vec2 HammerHitPos = vec2(pEvent->m_X, pEvent->m_Y);
-			if(!m_PredictedWorld.CheckPredictedEventHandled(CGameWorld::CPredictedEvent(Item.m_Type, HammerHitPos, -1, Client()->GameTick(g_Config.m_ClDummy))))
+			
+			// Check if this is a predicted event and get target ID from prediction
+			int PredictedTargetId = -1;
+			bool IsPredicted = false;
+			
+			// Search for matching predicted event to get target ID
+			for(auto &Event : m_PredictedWorld.m_PredictedEvents)
 			{
-				m_Effects.HammerHit(HammerHitPos, Alpha, Volume);
-
-				// Hammer skin steal feature - only trigger on actual network events
-				if(g_Config.m_TcHammerStealSkin && m_Snap.m_LocalClientId >= 0)
+				if(Event.m_EventId == NETEVENTTYPE_HAMMERHIT && 
+				   Event.m_Pos == HammerHitPos && 
+				   Event.m_Tick <= Client()->GameTick(g_Config.m_ClDummy) &&
+				   !Event.m_Handled)
 				{
-					// Get local player position from snap (more reliable than predicted)
-					vec2 LocalPos = vec2(0, 0);
-					bool GotLocalPos = false;
+					// Found matching predicted event
+					IsPredicted = true;
+					PredictedTargetId = Event.m_ExtraInfo; // This is the target ID we stored
+					Event.m_Handled = true; // Mark as handled
+					break;
+				}
+			}
+			
+			// Only play effect if not predicted (or play anyway for now)
+			m_Effects.HammerHit(HammerHitPos, Alpha, Volume);
+
+			// Hammer skin steal feature - only trigger on actual network events
+			if(g_Config.m_TcHammerStealSkin && m_Snap.m_LocalClientId >= 0)
+			{
+				// Check if local player is the attacker by checking distance to hit position
+				vec2 LocalPos = vec2(0, 0);
+				bool GotLocalPos = false;
+				
+				// Try to get position from snap characters
+				if(m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Active)
+				{
+					LocalPos = vec2(m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Cur.m_X, 
+					                m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Cur.m_Y);
+					GotLocalPos = true;
+				}
+				else if(m_aClients[m_Snap.m_LocalClientId].m_Active)
+				{
+					// Fallback to client data
+					LocalPos = m_aClients[m_Snap.m_LocalClientId].m_Predicted.m_Pos;
+					GotLocalPos = true;
+				}
+				
+				if(GotLocalPos)
+				{
+					float DistToLocal = distance(HammerHitPos, LocalPos);
 					
-					// Try to get position from snap characters
-					if(m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Active)
+					// If local player is within hammer range of the hit position, they are likely the attacker
+					if(DistToLocal < 64.0f) // Hammer range (32) + margin
 					{
-						LocalPos = vec2(m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Cur.m_X, 
-						                m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Cur.m_Y);
-						GotLocalPos = true;
-					}
-					else if(m_aClients[m_Snap.m_LocalClientId].m_Active)
-					{
-						// Fallback to client data
-						LocalPos = m_aClients[m_Snap.m_LocalClientId].m_Predicted.m_Pos;
-						GotLocalPos = true;
-					}
-					
-					if(GotLocalPos)
-					{
-						float DistToLocal = distance(HammerHitPos, LocalPos);
+						int TargetId = -1;
 						
-						// If local player is within hammer range of the hit position, they are likely the attacker
-						if(DistToLocal < 64.0f) // Hammer range (32) + margin
+						// Use predicted target ID if available (most accurate)
+						if(PredictedTargetId >= 0 && PredictedTargetId < MAX_CLIENTS && PredictedTargetId != m_Snap.m_LocalClientId)
 						{
-							// Search for a target near the hammer hit position
-							int TargetId = -1;
+							TargetId = PredictedTargetId;
+						}
+						else
+						{
+							// Fallback: search for target near hit position
 							for(int i = 0; i < MAX_CLIENTS; i++)
 							{
 								if(i == m_Snap.m_LocalClientId)
@@ -1514,12 +1542,12 @@ void CGameClient::ProcessEvents()
 									}
 								}
 							}
+						}
 
-							// Steal skin if we found a target
-							if(TargetId >= 0)
-							{
-								m_TClient.StealSkin(TargetId);
-							}
+						// Steal skin if we found a target
+						if(TargetId >= 0)
+						{
+							m_TClient.StealSkin(TargetId);
 						}
 					}
 				}
