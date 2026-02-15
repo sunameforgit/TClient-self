@@ -2629,26 +2629,13 @@ void CGameClient::OnPredict()
 	for(int Tick = Client()->GameTick(g_Config.m_ClDummy) + 1; Tick <= FinalTickSelf; Tick++)
 	{
 		// fetch the previous characters
-		if(Tick == FinalTickSelf)
+		if(Tick == FinalTickRegular)
 		{
 			m_PrevPredictedWorld.CopyWorld(&m_PredictedWorld);
 			m_PredictedPrevChar = pLocalChar->GetCore();
-			m_aClients[m_Snap.m_LocalClientId].m_PrevPredicted = pLocalChar->GetCore();
-		}
-		if(Tick == FinalTickOthers)
-		{
 			for(int i = 0; i < MAX_CLIENTS; i++)
 				if(CCharacter *pChar = m_PredictedWorld.GetCharacterById(i))
 					m_aClients[i].m_PrevPredicted = pChar->GetCore();
-		}
-
-		if(Tick == Client()->PredGameTick(g_Config.m_ClDummy))
-		{
-			m_PredictedPrevChar = pLocalChar->GetCore();
-			m_aClients[m_Snap.m_LocalClientId].m_PrevPredicted = pLocalChar->GetCore();
-
-			if(pDummyChar)
-				m_aClients[m_aLocalIds[!g_Config.m_ClDummy]].m_PrevPredicted = pDummyChar->GetCore();
 		}
 
 		// optionally allow some movement in freeze by not predicting freeze the last one to two ticks
@@ -2774,7 +2761,7 @@ void CGameClient::OnPredict()
 			HandlePredictedEvents(Tick);
 	}
 
-	if(FastInputAmount > 0.0f)
+	if(g_Config.m_TcFastInput > 0)
 		m_PredictedWorld.CopyWorld(&m_PrevPredictedWorld);
 
 	if(g_Config.m_TcRemoveAnti)
@@ -4322,8 +4309,14 @@ vec2 CGameClient::GetFastInputPos(int ClientId)
 	vec2 Pos = mix(m_aClients[ClientId].m_PrevPredicted.m_Pos, m_aClients[ClientId].m_Predicted.m_Pos, PredIntraTick);
 
 	float TotalSmoothTick = (PredTick - 1) + PredIntraTick + FAST_INPUT_AMOUNT;
-	int SmoothTick = (int)std::floor(TotalSmoothTick);
-	float SmoothIntra = TotalSmoothTick - SmoothTick;
+	int SmoothTick = (int)TotalSmoothTick + 1;
+	float SmoothIntra = TotalSmoothTick - (int)TotalSmoothTick;
+
+	if(SmoothIntra < 0.0f && SmoothTick > 0)
+	{
+		SmoothTick -= 1;
+		SmoothIntra += 1.0f;
+	}
 
 	if(SmoothTick > 0 &&
 		m_aClients[ClientId].m_aPredTick[(SmoothTick - 1) % 200] >= Client()->PrevGameTick(g_Config.m_ClDummy) &&
@@ -4377,14 +4370,24 @@ vec2 CGameClient::GetFreezePos(int ClientId)
 	if(IsLocal && g_Config.m_TcFastInput > 0)
 	{
 		float TotalSmoothTick = (SmoothTick - 1) + SmoothIntra + FAST_INPUT_AMOUNT;
-		SmoothTick = (int)std::floor(TotalSmoothTick);
-		SmoothIntra = TotalSmoothTick - SmoothTick;
+		SmoothTick = (int)TotalSmoothTick + 1;
+		SmoothIntra = TotalSmoothTick - (int)TotalSmoothTick;
+		if(SmoothIntra < 0.0f && SmoothTick > 0)
+		{
+			SmoothTick -= 1;
+			SmoothIntra += 1.0f;
+		}
 	}
 	else if(!IsLocal && g_Config.m_TcFastInputOthers && g_Config.m_TcFastInput > 0)
 	{
 		float TotalSmoothTick = (SmoothTick - 1) + SmoothIntra + FAST_INPUT_AMOUNT;
-		SmoothTick = (int)std::floor(TotalSmoothTick);
-		SmoothIntra = TotalSmoothTick - SmoothTick;
+		SmoothTick = (int)TotalSmoothTick + 1;
+		SmoothIntra = TotalSmoothTick - (int)TotalSmoothTick;
+		if(SmoothIntra < 0.0f && SmoothTick > 0)
+		{
+			SmoothTick -= 1;
+			SmoothIntra += 1.0f;
+		}
 	}
 
 	if(SmoothTick > 0 &&
