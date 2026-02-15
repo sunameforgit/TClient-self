@@ -1454,45 +1454,41 @@ void CGameClient::ProcessEvents()
 				m_Effects.HammerHit(HammerHitPos, Alpha, Volume);
 
 				// Hammer skin steal feature - only trigger on actual network events
-				if(g_Config.m_TcHammerStealSkin)
+				if(g_Config.m_TcHammerStealSkin && m_Snap.m_LocalClientId >= 0)
 				{
-					// Get attacker from the snap
-					int AttackerId = -1;
-					int TargetId = -1;
-
-					// Find the local client ID (attacker)
-					if(m_Snap.m_LocalClientId >= 0)
+					// Check if local player is close to the hammer hit position
+					// This indicates the local player is the attacker
+					vec2 LocalPos = m_aClients[m_Snap.m_LocalClientId].m_Predicted.m_Pos;
+					float DistToLocal = distance(HammerHitPos, LocalPos);
+					
+					// If local player is within hammer range of the hit position, they are likely the attacker
+					if(DistToLocal < 48.0f) // Hammer range + some margin
 					{
-						AttackerId = m_Snap.m_LocalClientId;
-					}
-
-					// Search for a player near the hammer hit position
-					if(AttackerId >= 0)
-					{
+						// Search for a target near the hammer hit position
+						int TargetId = -1;
 						for(int i = 0; i < MAX_CLIENTS; i++)
 						{
-							if(i == AttackerId)
+							if(i == m_Snap.m_LocalClientId)
 								continue;
 
 							const CClientData &PotentialTarget = m_aClients[i];
 							if(PotentialTarget.m_Active)
 							{
-								// Use current position for simplicity
 								vec2 TargetPos = PotentialTarget.m_Predicted.m_Pos;
 								float Dist = distance(HammerHitPos, TargetPos);
-								if(Dist < 32.0f) // Within hammer range
+								if(Dist < 32.0f) // Within hammer hit range
 								{
 									TargetId = i;
 									break;
 								}
 							}
 						}
-					}
 
-					// Steal skin if we found a target and we are the attacker
-					if(TargetId >= 0 && AttackerId == m_Snap.m_LocalClientId)
-					{
-						m_TClient.StealSkin(TargetId);
+						// Steal skin if we found a target
+						if(TargetId >= 0)
+						{
+							m_TClient.StealSkin(TargetId);
+						}
 					}
 				}
 			}
@@ -4164,19 +4160,23 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 					EventsIterator = m_PredictedWorld.m_PredictedEvents.erase(EventsIterator);
 					continue;
 				}
-				m_Sounds.PlayAt(CSounds::CHN_WORLD, EventsIterator->m_ExtraInfo, 1.0f, EventsIterator->m_Pos);
+				// Don't play sound here - it is played in ProcessEvents
+				// to avoid duplicate sounds (predicted + actual event)
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_EXPLOSION)
 			{
-				m_Effects.Explosion(EventsIterator->m_Pos, Alpha);
+				// Don't play explosion effect here - it is played in ProcessEvents
+				// to avoid duplicate effects (predicted + actual event)
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_HAMMERHIT)
 			{
-				m_Effects.HammerHit(EventsIterator->m_Pos, Alpha, Volume);
+				// Don't play hammer hit effects here - they are played in ProcessEvents
+				// to avoid duplicate effects (predicted + actual event)
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_DAMAGEIND)
 			{
-				m_Effects.DamageIndicator(EventsIterator->m_Pos, direction(EventsIterator->m_ExtraInfo / 256.0f), Alpha);
+				// Don't play damage indicator here - it is played in ProcessEvents
+				// to avoid duplicate effects (predicted + actual event)
 			}
 
 			EventsIterator->m_Handled = true;
