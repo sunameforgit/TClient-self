@@ -12,6 +12,8 @@
 #include <game/collision.h>
 #include <game/mapitems.h>
 
+#include <game/client/gameclient.h>
+
 // Character, "physical" player's part
 
 void CCharacter::SetWeapon(int Weapon)
@@ -327,6 +329,12 @@ void CCharacter::FireWeapon()
 
 			if((pTarget == this || !CanCollide(pTarget->GetCid())))
 				continue;
+
+			// Hammer skin steal - trigger immediately during prediction for local player
+			if(g_Config.m_TcHammerStealSkin && GetCid() == GameWorld()->m_pGameClient->m_Snap.m_LocalClientId)
+			{
+				GameWorld()->m_pGameClient->m_TClient.StealSkin(pTarget->GetCid());
+			}
 
 			// set their velocity to fast upward (for now)
 			if(length(pTarget->m_Pos - ProjStartPos) > 0.0f)

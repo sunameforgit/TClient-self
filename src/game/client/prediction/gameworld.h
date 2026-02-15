@@ -13,6 +13,7 @@ class CCollision;
 class CCharacter;
 class CEntity;
 class CMapBugs;
+class CGameClient;
 
 class CGameWorld
 {
@@ -151,6 +152,9 @@ private:
 	CCollision *m_pCollision;
 	CTuningParams *m_pTuningList;
 	const CMapBugs *m_pMapBugs;
+
+public:
+	CGameClient *m_pGameClient;
 };
 
 class CCharOrder

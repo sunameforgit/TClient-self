@@ -36,6 +36,7 @@ CGameWorld::CGameWorld()
 	m_GameTick = 0;
 	m_pParent = nullptr;
 	m_pChild = nullptr;
+	m_pGameClient = nullptr;
 }
 
 CGameWorld::~CGameWorld()
