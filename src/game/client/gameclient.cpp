@@ -4153,6 +4153,8 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 	{
 		if(!EventsIterator->m_Handled && EventsIterator->m_Tick <= Tick)
 		{
+			// Only handle events that should be played during prediction
+			// Other events (sounds, effects) are handled in ProcessEvents
 			if(EventsIterator->m_EventId == NETEVENTTYPE_SOUNDWORLD)
 			{
 				if(m_GameInfo.m_RaceSounds && ((EventsIterator->m_ExtraInfo == SOUND_GUN_FIRE && !g_Config.m_SndGun) || (EventsIterator->m_ExtraInfo == SOUND_PLAYER_PAIN_LONG && !g_Config.m_SndLongPain)))
@@ -4161,22 +4163,30 @@ void CGameClient::HandlePredictedEvents(const int Tick)
 					continue;
 				}
 				// Don't play sound here - it is played in ProcessEvents
-				// to avoid duplicate sounds (predicted + actual event)
+				// Skip marking as handled so ProcessEvents can play it
+				++EventsIterator;
+				continue;
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_EXPLOSION)
 			{
 				// Don't play explosion effect here - it is played in ProcessEvents
-				// to avoid duplicate effects (predicted + actual event)
+				// Skip marking as handled so ProcessEvents can play it
+				++EventsIterator;
+				continue;
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_HAMMERHIT)
 			{
 				// Don't play hammer hit effects here - they are played in ProcessEvents
-				// to avoid duplicate effects (predicted + actual event)
+				// Skip marking as handled so ProcessEvents can play it
+				++EventsIterator;
+				continue;
 			}
 			else if(EventsIterator->m_EventId == NETEVENTTYPE_DAMAGEIND)
 			{
 				// Don't play damage indicator here - it is played in ProcessEvents
-				// to avoid duplicate effects (predicted + actual event)
+				// Skip marking as handled so ProcessEvents can play it
+				++EventsIterator;
+				continue;
 			}
 
 			EventsIterator->m_Handled = true;
