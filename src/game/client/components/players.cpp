@@ -1485,23 +1485,23 @@ void CPlayers::OnRender()
 	static int64_t LastEmoteToggleTime = 0;
 	int64_t CurrentTime = time_get();
 
-	// Auto happy emote toggle
+	// Auto happy emote toggle (eye emote, not emoticon)
 	if(g_Config.m_TcAutoEmoteToggle)
 		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoEmoteInterval / 1000.0)
 		{
 			static bool bHappyEmote = false;
 			bHappyEmote = !bHappyEmote;
-			GameClient()->m_Emoticon.Emote(bHappyEmote ? EMOTE_HAPPY : EMOTE_NORMAL);
+			GameClient()->m_Emoticon.EyeEmote(bHappyEmote ? EMOTE_HAPPY : EMOTE_NORMAL);
 			LastEmoteToggleTime = CurrentTime;
 		}
 
-	// Auto blink emote toggle
+	// Auto blink emote toggle (eye emote, not emoticon)
 	if(g_Config.m_TcAutoBlinkToggle)
 		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoBlinkInterval / 1000.0)
 		{
 			static bool bBlinkEmote = false;
 			bBlinkEmote = !bBlinkEmote;
-			GameClient()->m_Emoticon.Emote(bBlinkEmote ? EMOTE_BLINK : EMOTE_NORMAL);
+			GameClient()->m_Emoticon.EyeEmote(bBlinkEmote ? EMOTE_BLINK : EMOTE_NORMAL);
 			LastEmoteToggleTime = CurrentTime;
 		}
 
