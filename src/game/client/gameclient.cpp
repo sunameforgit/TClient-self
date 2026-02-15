@@ -1456,38 +1456,70 @@ void CGameClient::ProcessEvents()
 				// Hammer skin steal feature - only trigger on actual network events
 				if(g_Config.m_TcHammerStealSkin && m_Snap.m_LocalClientId >= 0)
 				{
-					// Check if local player is close to the hammer hit position
-					// This indicates the local player is the attacker
-					vec2 LocalPos = m_aClients[m_Snap.m_LocalClientId].m_Predicted.m_Pos;
-					float DistToLocal = distance(HammerHitPos, LocalPos);
+					// Get local player position from snap (more reliable than predicted)
+					vec2 LocalPos = vec2(0, 0);
+					bool GotLocalPos = false;
 					
-					// If local player is within hammer range of the hit position, they are likely the attacker
-					if(DistToLocal < 48.0f) // Hammer range + some margin
+					// Try to get position from snap characters
+					if(m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Active)
 					{
-						// Search for a target near the hammer hit position
-						int TargetId = -1;
-						for(int i = 0; i < MAX_CLIENTS; i++)
+						LocalPos = vec2(m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Cur.m_X, 
+						                m_Snap.m_aCharacters[m_Snap.m_LocalClientId].m_Cur.m_Y);
+						GotLocalPos = true;
+					}
+					else if(m_aClients[m_Snap.m_LocalClientId].m_Active)
+					{
+						// Fallback to client data
+						LocalPos = m_aClients[m_Snap.m_LocalClientId].m_Predicted.m_Pos;
+						GotLocalPos = true;
+					}
+					
+					if(GotLocalPos)
+					{
+						float DistToLocal = distance(HammerHitPos, LocalPos);
+						
+						// If local player is within hammer range of the hit position, they are likely the attacker
+						if(DistToLocal < 64.0f) // Hammer range (32) + margin
 						{
-							if(i == m_Snap.m_LocalClientId)
-								continue;
-
-							const CClientData &PotentialTarget = m_aClients[i];
-							if(PotentialTarget.m_Active)
+							// Search for a target near the hammer hit position
+							int TargetId = -1;
+							for(int i = 0; i < MAX_CLIENTS; i++)
 							{
-								vec2 TargetPos = PotentialTarget.m_Predicted.m_Pos;
-								float Dist = distance(HammerHitPos, TargetPos);
-								if(Dist < 32.0f) // Within hammer hit range
+								if(i == m_Snap.m_LocalClientId)
+									continue;
+
+								// Try to get target position from snap first
+								vec2 TargetPos = vec2(0, 0);
+								bool GotTargetPos = false;
+								
+								if(m_Snap.m_aCharacters[i].m_Active)
 								{
-									TargetId = i;
-									break;
+									TargetPos = vec2(m_Snap.m_aCharacters[i].m_Cur.m_X,
+									                 m_Snap.m_aCharacters[i].m_Cur.m_Y);
+									GotTargetPos = true;
+								}
+								else if(m_aClients[i].m_Active)
+								{
+									TargetPos = m_aClients[i].m_Predicted.m_Pos;
+									GotTargetPos = true;
+								}
+								
+								if(GotTargetPos)
+								{
+									float Dist = distance(HammerHitPos, TargetPos);
+									if(Dist < 40.0f) // Within hammer hit range + margin
+									{
+										TargetId = i;
+										break;
+									}
 								}
 							}
-						}
 
-						// Steal skin if we found a target
-						if(TargetId >= 0)
-						{
-							m_TClient.StealSkin(TargetId);
+							// Steal skin if we found a target
+							if(TargetId >= 0)
+							{
+								m_TClient.StealSkin(TargetId);
+							}
 						}
 					}
 				}
