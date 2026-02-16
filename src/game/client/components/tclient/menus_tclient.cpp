@@ -491,14 +491,14 @@ DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Au
 if(g_Config.m_TcAutoEmoteToggle)
 {
 	Column.HSplitTop(LineSize, &Button, &Column);
-	Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("Happy interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
+	Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("Interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
 }
 
 DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoBlinkToggle, TCLocalize("Auto Blink Emote"), &g_Config.m_TcAutoBlinkToggle, &Column, LineSize);
 if(g_Config.m_TcAutoBlinkToggle)
 {
 	Column.HSplitTop(LineSize, &Button, &Column);
-	Ui()->DoScrollbarOption(&g_Config.m_TcAutoBlinkInterval, &g_Config.m_TcAutoBlinkInterval, &Button, TCLocalize("Blink interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
+	Ui()->DoScrollbarOption(&g_Config.m_TcAutoBlinkInterval, &g_Config.m_TcAutoBlinkInterval, &Button, TCLocalize("Interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
 }
 
 Column.HSplitTop(LineSize, &Button, &Column);
