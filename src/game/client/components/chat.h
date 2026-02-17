@@ -223,6 +223,8 @@ public:
 	// between sent messages.
 	//
 	// It uses team or public chat depending on m_Mode.
-	void SendChatQueued(const char *pLine);
+	// @param pLine the chat message
+	// @param LowPriority if true, message will be sent only if no high priority messages are pending
+	void SendChatQueued(const char *pLine, bool LowPriority = false);
 };
 #endif

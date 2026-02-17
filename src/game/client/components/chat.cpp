@@ -1492,7 +1492,7 @@ void CChat::SendChat(int Team, const char *pLine)
 	Client()->SendPackMsgActive(&Msg, MSGFLAG_VITAL);
 }
 
-void CChat::SendChatQueued(const char *pLine)
+void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 {
 	if(!pLine || str_length(pLine) < 1)
 		return;
@@ -1501,8 +1501,22 @@ void CChat::SendChatQueued(const char *pLine)
 
 	if(m_LastChatSend + time_freq() < time())
 	{
-		SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
-		AddEntry = true;
+		// If this is a low priority message (emote) and there are pending chat messages,
+		// don't send it immediately to avoid blocking real chat messages
+		if(LowPriority && m_PendingChatCounter > 0)
+		{
+			// Add to queue but don't send yet
+			if(m_PendingChatCounter < 3)
+			{
+				++m_PendingChatCounter;
+				AddEntry = true;
+			}
+		}
+		else
+		{
+			SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
+			AddEntry = true;
+		}
 	}
 	else if(m_PendingChatCounter < 3)
 	{
