@@ -507,14 +507,6 @@ if(g_Config.m_TcAutoEmoteToggle)
 	}
 }
 
-// Auto Blink Emote (deprecated, for backward compatibility)
-DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoBlinkToggle, TCLocalize("Auto Blink Emote (Legacy)"), &g_Config.m_TcAutoBlinkToggle, &Column, LineSize);
-if(g_Config.m_TcAutoBlinkToggle)
-{
-	Column.HSplitTop(LineSize, &Button, &Column);
-	Ui()->DoScrollbarOption(&g_Config.m_TcAutoBlinkInterval, &g_Config.m_TcAutoBlinkInterval, &Button, TCLocalize("Interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
-}
-
 Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_TcCursorScale, &g_Config.m_TcCursorScale, &Button, TCLocalize("Ingame cursor scale"), 0, 500, &CUi::ms_LinearScrollbarScale, 0, "%");
 

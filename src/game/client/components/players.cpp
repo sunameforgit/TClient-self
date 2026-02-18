@@ -1519,16 +1519,6 @@ void CPlayers::OnRender()
 			LastEmoteToggleTime = CurrentTime;
 		}
 
-	// Auto blink emote toggle (deprecated, for backward compatibility)
-	if(g_Config.m_TcAutoBlinkToggle && !g_Config.m_TcAutoEmoteToggle)
-		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoBlinkInterval / 1000.0)
-		{
-			static bool bBlinkEmote = false;
-			bBlinkEmote = !bBlinkEmote;
-			GameClient()->m_Emoticon.EyeEmote(bBlinkEmote ? EMOTE_BLINK : EMOTE_NORMAL);
-			LastEmoteToggleTime = CurrentTime;
-		}
-
 	// update render info for ninja
 	CTeeRenderInfo aRenderInfo[MAX_CLIENTS];
 	const bool IsTeamPlay = GameClient()->IsTeamPlay();
