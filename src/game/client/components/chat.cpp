@@ -1276,14 +1276,19 @@ void CChat::OnRender()
 	// Use shorter interval (0.5s instead of 1s) for faster chat response
 	if(m_PendingChatCounter > 0 && m_LastChatSend + time_freq() / 2 < time())
 	{
-		CHistoryEntry *pEntry = m_History.Last();
-		for(int i = m_PendingChatCounter - 1; pEntry; --i, pEntry = m_History.Prev(pEntry))
+		// Find the oldest pending message (the one that was queued first)
+		// Traverse from the first (oldest) entry
+		CHistoryEntry *pEntry = m_History.First();
+		
+		// Skip entries that have already been sent (not pending)
+		// We need to find the (m_NumHistoryEntries - m_PendingChatCounter)th entry
+		// But since we don't track total history size, we'll use a different approach:
+		// Just send the first entry and remove it from history
+		if(pEntry)
 		{
-			if(i == 0)
-			{
-				SendChat(pEntry->m_Team, pEntry->m_aText);
-				break;
-			}
+			SendChat(pEntry->m_Team, pEntry->m_aText);
+			// Remove this entry from history to prevent re-sending
+			m_History.PopFirst();
 		}
 		--m_PendingChatCounter;
 	}
@@ -1504,8 +1509,6 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 	// Check if this is a high priority message (@ mention or /w whisper)
 	bool IsHighPriority = str_find(pLine, "@") || str_startswith(pLine, "/w ");
 
-	bool AddEntry = false;
-
 	// Use shorter interval (0.5s instead of 1s) for faster chat response
 	// High priority messages bypass the interval check
 	if(IsHighPriority || m_LastChatSend + time_freq() / 2 < time())
@@ -1518,28 +1521,41 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 			if(m_PendingChatCounter < 3)
 			{
 				++m_PendingChatCounter;
-				AddEntry = true;
+				// Only add to history if it's not an emote command
+				if(!IsEmoteCommand)
+				{
+					const int Length = str_length(pLine);
+					CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
+					pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
+					str_copy(pEntry->m_aText, pLine, Length + 1);
+				}
 			}
 		}
 		else
 		{
+			// Send immediately - don't add to queue
 			SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
-			AddEntry = true;
+			// Only add to history if it's not an emote command
+			if(!IsEmoteCommand)
+			{
+				const int Length = str_length(pLine);
+				CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
+				pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
+				str_copy(pEntry->m_aText, pLine, Length + 1);
+			}
 		}
 	}
 	else if(m_PendingChatCounter < 3)
 	{
+		// Add to queue for later sending
 		++m_PendingChatCounter;
-		AddEntry = true;
-	}
-
-	// Only add to history if it's not an emote command
-	// This prevents chat history from being polluted with /emote commands
-	if(AddEntry && !IsEmoteCommand)
-	{
-		const int Length = str_length(pLine);
-		CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
-		pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
-		str_copy(pEntry->m_aText, pLine, Length + 1);
+		// Only add to history if it's not an emote command
+		if(!IsEmoteCommand)
+		{
+			const int Length = str_length(pLine);
+			CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
+			pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
+			str_copy(pEntry->m_aText, pLine, Length + 1);
+		}
 	}
 }
