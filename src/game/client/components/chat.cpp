@@ -1501,10 +1501,14 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 	// Check if this is an emote command (starts with "/emote ")
 	bool IsEmoteCommand = str_startswith(pLine, "/emote ");
 
+	// Check if this is a high priority message (@ mention or /w whisper)
+	bool IsHighPriority = str_find(pLine, "@") || str_startswith(pLine, "/w ");
+
 	bool AddEntry = false;
 
 	// Use shorter interval (0.5s instead of 1s) for faster chat response
-	if(m_LastChatSend + time_freq() / 2 < time())
+	// High priority messages bypass the interval check
+	if(IsHighPriority || m_LastChatSend + time_freq() / 2 < time())
 	{
 		// If this is a low priority message (emote) and there are pending chat messages,
 		// don't send it immediately to avoid blocking real chat messages
