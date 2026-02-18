@@ -1487,7 +1487,7 @@ void CPlayers::OnRender()
 
 	// Auto emote toggle (eye emote, not emoticon)
 	static bool s_bEmoteActive = false;
-	if(g_Config.m_TcAutoEmoteToggle)
+	if(g_Config.m_TcAutoEmoteToggle && !GameClient()->m_Chat.IsActive()) // Pause when chat is open
 		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoEmoteInterval / 1000.0)
 		{
 			int EmoteType = EMOTE_NORMAL;
