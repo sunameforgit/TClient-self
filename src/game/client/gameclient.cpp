@@ -2262,7 +2262,7 @@ void CGameClient::OnNewSnapshot()
 			{
 				char aBuf[256];
 				str_format(aBuf, sizeof(aBuf), "[TClient] Friend '%s' is now online!", m_aClients[i].m_aName);
-				m_Chat.AddLine(-1, 0, aBuf);
+				m_Chat.AddLine(-2, 0, aBuf); // -2 = CLIENT_MSG (green color)
 				s_LastFriendNotifyTime[i] = CurrentTime;
 			}
 		}
