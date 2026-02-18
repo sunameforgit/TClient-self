@@ -1495,7 +1495,8 @@ void CPlayers::OnRender()
 			if(g_Config.m_TcAutoEmoteType == 5) // Random mode - randomly select from all emotes including NORMAL
 			{
 				static const int s_aAllEmotes[] = {EMOTE_NORMAL, EMOTE_HAPPY, EMOTE_PAIN, EMOTE_SURPRISE, EMOTE_ANGRY, EMOTE_BLINK};
-				EmoteType = s_aAllEmotes[rand() % 6];
+				// Use time_get() for better randomness instead of rand()
+				EmoteType = s_aAllEmotes[(time_get() / time_freq()) % 6];
 			}
 			else // Specific emote mode - toggle between NORMAL and selected emote
 			{

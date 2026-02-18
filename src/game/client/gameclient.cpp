@@ -2253,12 +2253,18 @@ void CGameClient::OnNewSnapshot()
 		// update friend state
 		m_aClients[i].m_Friend = !(i == m_Snap.m_LocalClientId || !m_Snap.m_apPlayerInfos[i] || !Friends()->IsFriend(m_aClients[i].m_aName, m_aClients[i].m_aClan, true));
 
-		// Check if friend just came online
+		// Check if friend just came online (with 5 second cooldown to prevent spam)
+		static int64_t s_LastFriendNotifyTime[MAX_CLIENTS] = {0};
 		if(g_Config.m_TcFriendOnlineNotify && !WasFriend && m_aClients[i].m_Friend && m_Snap.m_apPlayerInfos[i])
 		{
-			char aBuf[256];
-			str_format(aBuf, sizeof(aBuf), "[TClient] Friend '%s' is now online!", m_aClients[i].m_aName);
-			m_Chat.AddLine(-1, 0, aBuf);
+			int64_t CurrentTime = time_get();
+			if(CurrentTime - s_LastFriendNotifyTime[i] > time_freq() * 5) // 5 second cooldown
+			{
+				char aBuf[256];
+				str_format(aBuf, sizeof(aBuf), "[TClient] Friend '%s' is now online!", m_aClients[i].m_aName);
+				m_Chat.AddLine(-1, 0, aBuf);
+				s_LastFriendNotifyTime[i] = CurrentTime;
+			}
 		}
 
 		// update foe state
