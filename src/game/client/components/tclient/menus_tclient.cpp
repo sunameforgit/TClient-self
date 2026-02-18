@@ -520,6 +520,8 @@ if(g_Config.m_TcAutoEmoteToggle)
 Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_TcCursorScale, &g_Config.m_TcCursorScale, &Button, TCLocalize("Ingame cursor scale"), 0, 500, &CUi::ms_LinearScrollbarScale, 0, "%");
 
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFriendOnlineNotify, TCLocalize("Friend online notification"), &g_Config.m_TcFriendOnlineNotify, &Column, LineSize);
+
 	Column.HSplitTop(LineSize, &Button, &Column);
 	if(g_Config.m_TcAnimateWheelTime > 0)
 		Ui()->DoScrollbarOption(&g_Config.m_TcAnimateWheelTime, &g_Config.m_TcAnimateWheelTime, &Button, TCLocalize("Wheel animate"), 0, 1000, &CUi::ms_LinearScrollbarScale, 0, "ms");

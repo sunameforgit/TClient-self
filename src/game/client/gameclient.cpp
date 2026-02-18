@@ -2247,8 +2247,19 @@ void CGameClient::OnNewSnapshot()
 
 	for(int i = 0; i < MAX_CLIENTS; ++i)
 	{
+		// Store previous friend state for online notification
+		bool WasFriend = m_aClients[i].m_Friend;
+
 		// update friend state
 		m_aClients[i].m_Friend = !(i == m_Snap.m_LocalClientId || !m_Snap.m_apPlayerInfos[i] || !Friends()->IsFriend(m_aClients[i].m_aName, m_aClients[i].m_aClan, true));
+
+		// Check if friend just came online
+		if(g_Config.m_TcFriendOnlineNotify && !WasFriend && m_aClients[i].m_Friend && m_Snap.m_apPlayerInfos[i])
+		{
+			char aBuf[256];
+			str_format(aBuf, sizeof(aBuf), "[TClient] Friend '%s' is now online!", m_aClients[i].m_aName);
+			m_Chat.AddLine(-1, 0, aBuf);
+		}
 
 		// update foe state
 		m_aClients[i].m_Foe = !(i == m_Snap.m_LocalClientId || !m_Snap.m_apPlayerInfos[i] || !Foes()->IsFriend(m_aClients[i].m_aName, m_aClients[i].m_aClan, true));
