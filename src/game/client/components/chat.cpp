@@ -1520,10 +1520,11 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 			// Add to queue but don't send yet
 			if(m_PendingChatCounter < 3)
 			{
-				++m_PendingChatCounter;
 				// Only add to history if it's not an emote command
+				// and only increment counter if we actually queue something
 				if(!IsEmoteCommand)
 				{
+					++m_PendingChatCounter;
 					const int Length = str_length(pLine);
 					CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
 					pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
@@ -1545,17 +1546,14 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 			}
 		}
 	}
-	else if(m_PendingChatCounter < 3)
+	else if(m_PendingChatCounter < 3 && !IsEmoteCommand)
 	{
 		// Add to queue for later sending
+		// Only queue non-emote commands to keep counter and history in sync
 		++m_PendingChatCounter;
-		// Only add to history if it's not an emote command
-		if(!IsEmoteCommand)
-		{
-			const int Length = str_length(pLine);
-			CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
-			pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
-			str_copy(pEntry->m_aText, pLine, Length + 1);
-		}
+		const int Length = str_length(pLine);
+		CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
+		pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
+		str_copy(pEntry->m_aText, pLine, Length + 1);
 	}
 }
