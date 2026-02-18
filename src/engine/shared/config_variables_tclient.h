@@ -36,11 +36,12 @@ MACRO_CONFIG_INT(TcHammerRotatesWithCursor, tc_hammer_rotates_with_cursor, 0, 0,
 MACRO_CONFIG_INT(TcHammerStealSkin, tc_hammer_steal_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Steal skin and color from other tees when hammering them")
 MACRO_CONFIG_INT(TcHookStealSkin, tc_hook_steal_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Steal skin and color from other tees when hooking them")
 
-MACRO_CONFIG_INT(TcAutoEmoteToggle, tc_auto_emote_toggle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically toggle emote between normal and happy")
+MACRO_CONFIG_INT(TcAutoEmoteToggle, tc_auto_emote_toggle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically toggle emote")
 MACRO_CONFIG_INT(TcAutoEmoteInterval, tc_auto_emote_interval, 500, 100, 5000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interval in milliseconds for auto emote toggle")
+MACRO_CONFIG_INT(TcAutoEmoteType, tc_auto_emote_type, 0, 0, 5, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Auto emote type: 0=Happy, 1=Pain, 2=Surprise, 3=Angry, 4=Blink, 5=Random")
 
-MACRO_CONFIG_INT(TcAutoBlinkToggle, tc_auto_blink_toggle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically toggle emote between normal and blink")
-MACRO_CONFIG_INT(TcAutoBlinkInterval, tc_auto_blink_interval, 500, 100, 5000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interval in milliseconds for auto blink toggle")
+MACRO_CONFIG_INT(TcAutoBlinkToggle, tc_auto_blink_toggle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically toggle emote between normal and blink (deprecated, use TcAutoEmoteToggle)")
+MACRO_CONFIG_INT(TcAutoBlinkInterval, tc_auto_blink_interval, 500, 100, 5000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interval in milliseconds for auto blink toggle (deprecated)")
 
 MACRO_CONFIG_INT(TcMiniVoteHud, tc_mini_vote_hud, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "When enabled makes the vote UI small")
 

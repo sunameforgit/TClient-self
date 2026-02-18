@@ -1485,18 +1485,39 @@ void CPlayers::OnRender()
 	static int64_t LastEmoteToggleTime = 0;
 	int64_t CurrentTime = time_get();
 
-	// Auto happy emote toggle (eye emote, not emoticon)
+	// Auto emote toggle (eye emote, not emoticon)
 	if(g_Config.m_TcAutoEmoteToggle)
 		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoEmoteInterval / 1000.0)
 		{
-			static bool bHappyEmote = false;
-			bHappyEmote = !bHappyEmote;
-			GameClient()->m_Emoticon.EyeEmote(bHappyEmote ? EMOTE_HAPPY : EMOTE_NORMAL);
+			static bool bEmoteActive = false;
+			bEmoteActive = !bEmoteActive;
+			
+			int EmoteType = EMOTE_NORMAL;
+			if(bEmoteActive)
+			{
+				// Map config value to emote type
+				switch(g_Config.m_TcAutoEmoteType)
+				{
+				case 0: EmoteType = EMOTE_HAPPY; break;
+				case 1: EmoteType = EMOTE_PAIN; break;
+				case 2: EmoteType = EMOTE_SURPRISE; break;
+				case 3: EmoteType = EMOTE_ANGRY; break;
+				case 4: EmoteType = EMOTE_BLINK; break;
+				case 5: // Random
+					{
+						static const int s_aRandomEmotes[] = {EMOTE_HAPPY, EMOTE_PAIN, EMOTE_SURPRISE, EMOTE_ANGRY, EMOTE_BLINK};
+						EmoteType = s_aRandomEmotes[rand() % 5];
+					}
+					break;
+				default: EmoteType = EMOTE_HAPPY; break;
+				}
+			}
+			GameClient()->m_Emoticon.EyeEmote(EmoteType);
 			LastEmoteToggleTime = CurrentTime;
 		}
 
-	// Auto blink emote toggle (eye emote, not emoticon)
-	if(g_Config.m_TcAutoBlinkToggle)
+	// Auto blink emote toggle (deprecated, for backward compatibility)
+	if(g_Config.m_TcAutoBlinkToggle && !g_Config.m_TcAutoEmoteToggle)
 		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoBlinkInterval / 1000.0)
 		{
 			static bool bBlinkEmote = false;

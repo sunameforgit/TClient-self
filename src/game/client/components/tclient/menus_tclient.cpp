@@ -487,14 +487,28 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHammerStealSkin, TCLocalize("Skin Steal (Hammer)"), &g_Config.m_TcHammerStealSkin, &Column, LineSize);
 DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHookStealSkin, TCLocalize("Skin Steal (Hook)"), &g_Config.m_TcHookStealSkin, &Column, LineSize);
 
-DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Auto Happy Emote"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
+DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Auto Emote"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
 if(g_Config.m_TcAutoEmoteToggle)
 {
 	Column.HSplitTop(LineSize, &Button, &Column);
 	Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("Interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
+	
+	Column.HSplitTop(LineSize, &Button, &Column);
+	static std::vector<const char *> s_EmoteTypeNames;
+	s_EmoteTypeNames = {TCLocalize("Happy"), TCLocalize("Pain"), TCLocalize("Surprise"), TCLocalize("Angry"), TCLocalize("Blink"), TCLocalize("Random")};
+	static CUi::SDropDownState s_EmoteDropDownState;
+	static CScrollRegion s_EmoteDropDownScrollRegion;
+	s_EmoteDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_EmoteDropDownScrollRegion;
+	int EmoteSelectedOld = g_Config.m_TcAutoEmoteType;
+	const int EmoteSelectedNew = Ui()->DoDropDown(&Button, EmoteSelectedOld, s_EmoteTypeNames.data(), s_EmoteTypeNames.size(), s_EmoteDropDownState);
+	if(EmoteSelectedOld != EmoteSelectedNew)
+	{
+		g_Config.m_TcAutoEmoteType = EmoteSelectedNew;
+	}
 }
 
-DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoBlinkToggle, TCLocalize("Auto Blink Emote"), &g_Config.m_TcAutoBlinkToggle, &Column, LineSize);
+// Auto Blink Emote (deprecated, for backward compatibility)
+DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoBlinkToggle, TCLocalize("Auto Blink Emote (Legacy)"), &g_Config.m_TcAutoBlinkToggle, &Column, LineSize);
 if(g_Config.m_TcAutoBlinkToggle)
 {
 	Column.HSplitTop(LineSize, &Button, &Column);
