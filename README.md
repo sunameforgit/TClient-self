@@ -181,7 +181,33 @@ print(re.replace(re.compile("\\d"), "h3ll0", true, fun[](str, match, group) { //
 
 ![image](https://user-images.githubusercontent.com/22122579/182528700-4c8238c3-836e-49c3-9996-68025e7f5d58.png)
 
-### Features
+### Custom Features (Added by suname)
+
+#### 🎭 Auto Emote Toggle
+Automatically switch between eye emotes with customizable interval and type.
+- `tc_auto_emote_toggle` - Enable/disable auto emote
+- `tc_auto_emote_interval` - Switch interval in milliseconds (100-5000ms)
+- `tc_auto_emote_type` - Emote type: 0=Happy, 1=Pain, 2=Surprise, 3=Angry, 4=Blink, 5=Random
+- Automatically pauses when chat is open
+
+#### 🔨 Hammer Skin Steal
+Automatically steal other players' skins when hitting them with hammer.
+- `tc_hammer_skin_steal` - Enable/disable skin steal on hammer hit
+
+#### 👥 Friend Online Notification
+Get notified when your friends join the server.
+- `tc_friend_online_notify` - Show notification when friend comes online (green message in chat)
+- 5-second cooldown to prevent spam
+- Only visible to you
+
+#### 💬 Improved Chat Experience
+- Regular chat messages are sent immediately without delay
+- Emote commands have rate limiting (0.5s) to prevent spam
+- Fixed message duplication issues
+
+---
+
+### Original TClient Features
 
 > [!NOTE]
 > This is out of date
