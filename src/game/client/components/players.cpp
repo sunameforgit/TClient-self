@@ -1489,27 +1489,30 @@ void CPlayers::OnRender()
 	if(g_Config.m_TcAutoEmoteToggle)
 		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoEmoteInterval / 1000.0)
 		{
-			static bool bEmoteActive = false;
-			bEmoteActive = !bEmoteActive;
-			
 			int EmoteType = EMOTE_NORMAL;
-			if(bEmoteActive)
+			
+			if(g_Config.m_TcAutoEmoteType == 5) // Random mode - randomly select from all emotes including NORMAL
 			{
-				// Map config value to emote type
-				switch(g_Config.m_TcAutoEmoteType)
+				static const int s_aAllEmotes[] = {EMOTE_NORMAL, EMOTE_HAPPY, EMOTE_PAIN, EMOTE_SURPRISE, EMOTE_ANGRY, EMOTE_BLINK};
+				EmoteType = s_aAllEmotes[rand() % 6];
+			}
+			else // Specific emote mode - toggle between NORMAL and selected emote
+			{
+				static bool bEmoteActive = false;
+				bEmoteActive = !bEmoteActive;
+				
+				if(bEmoteActive)
 				{
-				case 0: EmoteType = EMOTE_HAPPY; break;
-				case 1: EmoteType = EMOTE_PAIN; break;
-				case 2: EmoteType = EMOTE_SURPRISE; break;
-				case 3: EmoteType = EMOTE_ANGRY; break;
-				case 4: EmoteType = EMOTE_BLINK; break;
-				case 5: // Random
+					// Map config value to emote type
+					switch(g_Config.m_TcAutoEmoteType)
 					{
-						static const int s_aRandomEmotes[] = {EMOTE_HAPPY, EMOTE_PAIN, EMOTE_SURPRISE, EMOTE_ANGRY, EMOTE_BLINK};
-						EmoteType = s_aRandomEmotes[rand() % 5];
+					case 0: EmoteType = EMOTE_HAPPY; break;
+					case 1: EmoteType = EMOTE_PAIN; break;
+					case 2: EmoteType = EMOTE_SURPRISE; break;
+					case 3: EmoteType = EMOTE_ANGRY; break;
+					case 4: EmoteType = EMOTE_BLINK; break;
+					default: EmoteType = EMOTE_HAPPY; break;
 					}
-					break;
-				default: EmoteType = EMOTE_HAPPY; break;
 				}
 			}
 			GameClient()->m_Emoticon.EyeEmote(EmoteType);
