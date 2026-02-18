@@ -1506,54 +1506,24 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 	// Check if this is an emote command (starts with "/emote ")
 	bool IsEmoteCommand = str_startswith(pLine, "/emote ");
 
-	// Check if this is a high priority message (@ mention or /w whisper)
-	bool IsHighPriority = str_find(pLine, "@") || str_startswith(pLine, "/w ");
-
-	// Use shorter interval (0.5s instead of 1s) for faster chat response
-	// High priority messages bypass the interval check
-	if(IsHighPriority || m_LastChatSend + time_freq() / 2 < time())
+	// Regular chat messages are always sent immediately for best user experience
+	// Only emote commands respect the rate limiting
+	if(!IsEmoteCommand)
 	{
-		// If this is a low priority message (emote) and there are pending chat messages,
-		// don't send it immediately to avoid blocking real chat messages
-		if(LowPriority && m_PendingChatCounter > 0)
-		{
-			// Add to queue but don't send yet
-			if(m_PendingChatCounter < 3)
-			{
-				// Only add to history if it's not an emote command
-				// and only increment counter if we actually queue something
-				if(!IsEmoteCommand)
-				{
-					++m_PendingChatCounter;
-					const int Length = str_length(pLine);
-					CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
-					pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
-					str_copy(pEntry->m_aText, pLine, Length + 1);
-				}
-			}
-		}
-		else
-		{
-			// Send immediately - don't add to queue
-			SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
-			// Only add to history if it's not an emote command
-			if(!IsEmoteCommand)
-			{
-				const int Length = str_length(pLine);
-				CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
-				pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
-				str_copy(pEntry->m_aText, pLine, Length + 1);
-			}
-		}
-	}
-	else if(m_PendingChatCounter < 3 && !IsEmoteCommand)
-	{
-		// Add to queue for later sending
-		// Only queue non-emote commands to keep counter and history in sync
-		++m_PendingChatCounter;
+		// Send chat message immediately
+		SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
+		// Add to history
 		const int Length = str_length(pLine);
 		CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
 		pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
 		str_copy(pEntry->m_aText, pLine, Length + 1);
+	}
+	else
+	{
+		// Emote commands use rate limiting to avoid spam
+		if(m_LastChatSend + time_freq() / 2 < time())
+		{
+			SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
+		}
 	}
 }
