@@ -38,11 +38,11 @@ Automatically switch between eye emotes with customizable interval and type.
 
 ### 🔨 Hammer Skin Steal
 Automatically steal other players' skins when hitting them with hammer.
-- `tc_hammer_skin_steal` - Enable/disable skin steal on hammer hit
+- `tc_hammer_steal_skin` - Enable/disable skin steal on hammer hit
 
 ### 🪝 Hook Skin Steal
 Automatically steal other players' skins when hooking them.
-- `tc_hook_skin_steal` - Enable/disable skin steal on hook
+- `tc_hook_steal_skin` - Enable/disable skin steal on hook
 
 ### 👥 Friend Online Notification
 Get notified when your friends join the server.
