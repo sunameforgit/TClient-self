@@ -1273,7 +1273,8 @@ void CChat::OnRender()
 		return;
 
 	// send pending chat messages
-	if(m_PendingChatCounter > 0 && m_LastChatSend + time_freq() < time())
+	// Use shorter interval (0.5s instead of 1s) for faster chat response
+	if(m_PendingChatCounter > 0 && m_LastChatSend + time_freq() / 2 < time())
 	{
 		CHistoryEntry *pEntry = m_History.Last();
 		for(int i = m_PendingChatCounter - 1; pEntry; --i, pEntry = m_History.Prev(pEntry))
@@ -1497,9 +1498,13 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 	if(!pLine || str_length(pLine) < 1)
 		return;
 
+	// Check if this is an emote command (starts with "/emote ")
+	bool IsEmoteCommand = str_startswith(pLine, "/emote ");
+
 	bool AddEntry = false;
 
-	if(m_LastChatSend + time_freq() < time())
+	// Use shorter interval (0.5s instead of 1s) for faster chat response
+	if(m_LastChatSend + time_freq() / 2 < time())
 	{
 		// If this is a low priority message (emote) and there are pending chat messages,
 		// don't send it immediately to avoid blocking real chat messages
@@ -1524,7 +1529,9 @@ void CChat::SendChatQueued(const char *pLine, bool LowPriority)
 		AddEntry = true;
 	}
 
-	if(AddEntry)
+	// Only add to history if it's not an emote command
+	// This prevents chat history from being polluted with /emote commands
+	if(AddEntry && !IsEmoteCommand)
 	{
 		const int Length = str_length(pLine);
 		CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
