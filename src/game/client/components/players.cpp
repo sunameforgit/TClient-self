@@ -1486,6 +1486,7 @@ void CPlayers::OnRender()
 	int64_t CurrentTime = time_get();
 
 	// Auto emote toggle (eye emote, not emoticon)
+	static bool s_bEmoteActive = false;
 	if(g_Config.m_TcAutoEmoteToggle)
 		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoEmoteInterval / 1000.0)
 		{
@@ -1498,10 +1499,9 @@ void CPlayers::OnRender()
 			}
 			else // Specific emote mode - toggle between NORMAL and selected emote
 			{
-				static bool bEmoteActive = false;
-				bEmoteActive = !bEmoteActive;
+				s_bEmoteActive = !s_bEmoteActive;
 				
-				if(bEmoteActive)
+				if(s_bEmoteActive)
 				{
 					// Map config value to emote type
 					switch(g_Config.m_TcAutoEmoteType)
