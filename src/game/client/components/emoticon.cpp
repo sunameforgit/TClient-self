@@ -320,6 +320,5 @@ void CEmoticon::EyeEmote(int Emote)
 		str_format(aBuf, sizeof(aBuf), "/emote blink %d", g_Config.m_ClEyeDuration);
 		break;
 	}
-	// Send emote command immediately - don't queue to ensure it works reliably
 	GameClient()->m_Chat.SendChat(0, aBuf);
 }

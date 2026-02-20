@@ -1481,45 +1481,6 @@ void CPlayers::OnRender()
 	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 		return;
 
-	// Auto emote toggle feature
-	static int64_t LastEmoteToggleTime = 0;
-	int64_t CurrentTime = time_get();
-
-	// Auto emote toggle (eye emote, not emoticon)
-	static bool s_bEmoteActive = false;
-	if(g_Config.m_TcAutoEmoteToggle && !GameClient()->m_Chat.IsActive()) // Pause when chat is open
-		if(CurrentTime - LastEmoteToggleTime > time_freq() * g_Config.m_TcAutoEmoteInterval / 1000.0)
-		{
-			int EmoteType = EMOTE_NORMAL;
-			
-			if(g_Config.m_TcAutoEmoteType == 5) // Random mode - randomly select from all emotes including NORMAL
-			{
-				static const int s_aAllEmotes[] = {EMOTE_NORMAL, EMOTE_HAPPY, EMOTE_PAIN, EMOTE_SURPRISE, EMOTE_ANGRY, EMOTE_BLINK};
-				// Use time_get() for better randomness instead of rand()
-				EmoteType = s_aAllEmotes[(time_get() / time_freq()) % 6];
-			}
-			else // Specific emote mode - toggle between NORMAL and selected emote
-			{
-				s_bEmoteActive = !s_bEmoteActive;
-				
-				if(s_bEmoteActive)
-				{
-					// Map config value to emote type
-					switch(g_Config.m_TcAutoEmoteType)
-					{
-					case 0: EmoteType = EMOTE_HAPPY; break;
-					case 1: EmoteType = EMOTE_PAIN; break;
-					case 2: EmoteType = EMOTE_SURPRISE; break;
-					case 3: EmoteType = EMOTE_ANGRY; break;
-					case 4: EmoteType = EMOTE_BLINK; break;
-					default: EmoteType = EMOTE_HAPPY; break;
-					}
-				}
-			}
-			GameClient()->m_Emoticon.EyeEmote(EmoteType);
-			LastEmoteToggleTime = CurrentTime;
-		}
-
 	// update render info for ninja
 	CTeeRenderInfo aRenderInfo[MAX_CLIENTS];
 	const bool IsTeamPlay = GameClient()->IsTeamPlay();
@@ -1541,8 +1502,8 @@ void CPlayers::OnRender()
 
 			Frozen = GameClient()->m_aClients[i].m_Predicted.m_FreezeEnd != 0;
 			// TClient
-			if(g_Config.m_TcFastInput > 0)
-				Frozen = GameClient()->m_aClients[i].m_PrevPredicted.m_FreezeEnd != 0;
+			if(g_Config.m_TcFastInput)
+				Frozen = GameClient()->m_aClients[i].m_RegularPredicted.m_FreezeEnd != 0;
 		}
 		else
 		{

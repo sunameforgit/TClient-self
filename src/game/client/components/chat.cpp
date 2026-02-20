@@ -274,8 +274,6 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			; // Do nothing as bindchat was executed
 		else if(GameClient()->m_TClient.ChatDoSpecId(m_Input.GetString()))
 			; // Do nothing as specid was executed
-		else if(GameClient()->m_TClient.ChatDoStealSkin(m_Input.GetString()))
-			; // Do nothing as stealskin was executed
 		else
 			SendChatQueued(m_Input.GetString());
 		m_pHistoryEntry = nullptr;
@@ -1273,22 +1271,16 @@ void CChat::OnRender()
 		return;
 
 	// send pending chat messages
-	// Use shorter interval (0.5s instead of 1s) for faster chat response
-	if(m_PendingChatCounter > 0 && m_LastChatSend + time_freq() / 2 < time())
+	if(m_PendingChatCounter > 0 && m_LastChatSend + time_freq() < time())
 	{
-		// Find the oldest pending message (the one that was queued first)
-		// Traverse from the first (oldest) entry
-		CHistoryEntry *pEntry = m_History.First();
-		
-		// Skip entries that have already been sent (not pending)
-		// We need to find the (m_NumHistoryEntries - m_PendingChatCounter)th entry
-		// But since we don't track total history size, we'll use a different approach:
-		// Just send the first entry and remove it from history
-		if(pEntry)
+		CHistoryEntry *pEntry = m_History.Last();
+		for(int i = m_PendingChatCounter - 1; pEntry; --i, pEntry = m_History.Prev(pEntry))
 		{
-			SendChat(pEntry->m_Team, pEntry->m_aText);
-			// Remove this entry from history to prevent re-sending
-			m_History.PopFirst();
+			if(i == 0)
+			{
+				SendChat(pEntry->m_Team, pEntry->m_aText);
+				break;
+			}
 		}
 		--m_PendingChatCounter;
 	}
@@ -1498,32 +1490,29 @@ void CChat::SendChat(int Team, const char *pLine)
 	Client()->SendPackMsgActive(&Msg, MSGFLAG_VITAL);
 }
 
-void CChat::SendChatQueued(const char *pLine, bool LowPriority)
+void CChat::SendChatQueued(const char *pLine)
 {
 	if(!pLine || str_length(pLine) < 1)
 		return;
 
-	// Check if this is an emote command (starts with "/emote ")
-	bool IsEmoteCommand = str_startswith(pLine, "/emote ");
+	bool AddEntry = false;
 
-	// Regular chat messages are always sent immediately for best user experience
-	// Only emote commands respect the rate limiting
-	if(!IsEmoteCommand)
+	if(m_LastChatSend + time_freq() < time())
 	{
-		// Send chat message immediately
 		SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
-		// Add to history
+		AddEntry = true;
+	}
+	else if(m_PendingChatCounter < 3)
+	{
+		++m_PendingChatCounter;
+		AddEntry = true;
+	}
+
+	if(AddEntry)
+	{
 		const int Length = str_length(pLine);
 		CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
 		pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
 		str_copy(pEntry->m_aText, pLine, Length + 1);
-	}
-	else
-	{
-		// Emote commands use rate limiting to avoid spam
-		if(m_LastChatSend + time_freq() / 2 < time())
-		{
-			SendChat(m_Mode == MODE_ALL ? 0 : 1, pLine);
-		}
 	}
 }

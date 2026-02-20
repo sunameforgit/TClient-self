@@ -12,8 +12,6 @@
 #include <game/collision.h>
 #include <game/mapitems.h>
 
-#include <game/client/gameclient.h>
-
 // Character, "physical" player's part
 
 void CCharacter::SetWeapon(int Weapon)
@@ -330,21 +328,11 @@ void CCharacter::FireWeapon()
 			if((pTarget == this || !CanCollide(pTarget->GetCid())))
 				continue;
 
-			// Hammer skin steal - trigger immediately during prediction for local player
-			// Only trigger when we actually hit someone with hammer
-			if(g_Config.m_TcHammerStealSkin && 
-			   GameWorld()->m_pGameClient && 
-			   GetCid() == GameWorld()->m_pGameClient->m_Snap.m_LocalClientId &&
-			   m_Core.m_ActiveWeapon == WEAPON_HAMMER)
-			{
-				GameWorld()->m_pGameClient->m_TClient.StealSkin(pTarget->GetCid());
-			}
-
 			// set their velocity to fast upward (for now)
 			if(length(pTarget->m_Pos - ProjStartPos) > 0.0f)
-				GameWorld()->CreatePredictedHammerHitEvent(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * GetProximityRadius() * 0.5f, GetCid(), pTarget->GetCid());
+				GameWorld()->CreatePredictedHammerHitEvent(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * GetProximityRadius() * 0.5f, GetCid());
 			else
-				GameWorld()->CreatePredictedHammerHitEvent(ProjStartPos, GetCid(), pTarget->GetCid());
+				GameWorld()->CreatePredictedHammerHitEvent(ProjStartPos, GetCid());
 
 			vec2 Dir;
 			if(length(pTarget->m_Pos - m_Pos) > 0.0f)

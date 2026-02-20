@@ -36,7 +36,6 @@ CGameWorld::CGameWorld()
 	m_GameTick = 0;
 	m_pParent = nullptr;
 	m_pChild = nullptr;
-	m_pGameClient = nullptr;
 }
 
 CGameWorld::~CGameWorld()
@@ -880,9 +879,9 @@ void CGameWorld::CreatePredictedExplosionEvent(vec2 Pos, int Id)
 	CreatePredictedEvent(Event);
 }
 
-void CGameWorld::CreatePredictedHammerHitEvent(vec2 Pos, int Id, int TargetId)
+void CGameWorld::CreatePredictedHammerHitEvent(vec2 Pos, int Id)
 {
-	CPredictedEvent Event(NETEVENTTYPE_HAMMERHIT, Pos, Id, GameTick(), TargetId);
+	CPredictedEvent Event(NETEVENTTYPE_HAMMERHIT, Pos, Id, GameTick());
 	CreatePredictedEvent(Event);
 }
 

@@ -33,14 +33,6 @@ MACRO_CONFIG_INT(TcLimitMouseToScreen, tc_limit_mouse_to_screen, 0, 0, 2, CFGFLA
 MACRO_CONFIG_INT(TcScaleMouseDistance, tc_scale_mouse_distance, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Improve mouse precision by scaling max distance to 1000")
 
 MACRO_CONFIG_INT(TcHammerRotatesWithCursor, tc_hammer_rotates_with_cursor, 0, 0, 2, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Allow your hammer to rotate like other weapons")
-MACRO_CONFIG_INT(TcHammerStealSkin, tc_hammer_steal_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Steal skin and color from other tees when hammering them")
-MACRO_CONFIG_INT(TcHookStealSkin, tc_hook_steal_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Steal skin and color from other tees when hooking them")
-
-MACRO_CONFIG_INT(TcAutoEmoteToggle, tc_auto_emote_toggle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically toggle emote")
-MACRO_CONFIG_INT(TcAutoEmoteInterval, tc_auto_emote_interval, 500, 100, 5000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interval in milliseconds for auto emote toggle")
-MACRO_CONFIG_INT(TcAutoEmoteType, tc_auto_emote_type, 0, 0, 5, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Auto emote type: 0=Happy, 1=Pain, 2=Surprise, 3=Angry, 4=Blink, 5=Random")
-
-MACRO_CONFIG_INT(TcFriendOnlineNotify, tc_friend_online_notify, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show notification when a friend comes online")
 
 MACRO_CONFIG_INT(TcMiniVoteHud, tc_mini_vote_hud, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "When enabled makes the vote UI small")
 
@@ -65,8 +57,9 @@ MACRO_CONFIG_INT(TcShowCenter, tc_show_center, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG
 MACRO_CONFIG_INT(TcShowCenterWidth, tc_show_center_width, 0, 0, 20, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Center lines width (enabled by tc_show_center)")
 MACRO_CONFIG_COL(TcShowCenterColor, tc_show_center_color, 1694498688, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_COLALPHA, "Center lines color (enabled by tc_show_center)") // transparent red
 
-MACRO_CONFIG_INT(TcFastInput, tc_fast_input, 0, 0, 50, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Uses input for prediction up to 20ms faster (value is divided by 10)")
-MACRO_CONFIG_INT(TcFastInputOthers, tc_fast_input_others, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Do an extra 1 tick (20ms) for other tees with your fast inputs. (increases visual latency, makes dragging easier)")
+MACRO_CONFIG_INT(TcFastInput, tc_fast_input, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Uses input for prediction before the next tick")
+MACRO_CONFIG_INT(TcFastInputAmount, tc_fast_input_amount, 20, 1, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "How many milliseconds fast input will apply")
+MACRO_CONFIG_INT(TcFastInputOthers, tc_fast_input_others, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Apply fast input to other tees")
 
 MACRO_CONFIG_INT(TcAntiPingImproved, tc_antiping_improved, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Different antiping smoothing algorithm, not compatible with cl_antiping_smooth")
 MACRO_CONFIG_INT(TcAntiPingNegativeBuffer, tc_antiping_negative_buffer, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Helps in Gores. Allows internal certainty value to be negative which causes more conservative prediction")

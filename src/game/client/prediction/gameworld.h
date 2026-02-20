@@ -13,7 +13,6 @@ class CCollision;
 class CCharacter;
 class CEntity;
 class CMapBugs;
-class CGameClient;
 
 class CGameWorld
 {
@@ -138,7 +137,7 @@ public:
 
 	void CreatePredictedSound(vec2 Pos, int SoundId, int Id = -1);
 	void CreatePredictedExplosionEvent(vec2 Pos, int Id = -1);
-	void CreatePredictedHammerHitEvent(vec2 Pos, int Id = -1, int TargetId = -1);
+	void CreatePredictedHammerHitEvent(vec2 Pos, int Id = -1);
 	void CreatePredictedDamageIndEvent(vec2 Pos, float Angle, int Amount, int Id = -1);
 
 private:
@@ -152,9 +151,6 @@ private:
 	CCollision *m_pCollision;
 	CTuningParams *m_pTuningList;
 	const CMapBugs *m_pMapBugs;
-
-public:
-	CGameClient *m_pGameClient;
 };
 
 class CCharOrder
