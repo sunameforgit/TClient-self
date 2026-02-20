@@ -568,6 +568,42 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
+	// ***** Custom Features (Added by suname) ***** //
+	Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
+	s_SectionBoxes.push_back(Column);
+	Column.HSplitTop(HeadlineHeight, &Label, &Column);
+	Ui()->DoLabel(&Label, TCLocalize("Custom Features"), HeadlineFontSize, TEXTALIGN_ML);
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	// Skin Steal
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHammerStealSkin, TCLocalize("Skin Steal (Hammer)"), &g_Config.m_TcHammerStealSkin, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHookStealSkin, TCLocalize("Skin Steal (Hook)"), &g_Config.m_TcHookStealSkin, &Column, LineSize);
+
+	// Auto Emote
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Auto Emote"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
+	if(g_Config.m_TcAutoEmoteToggle)
+	{
+		static std::vector<const char *> s_EmoteDropDownNames = {TCLocalize("Happy"), TCLocalize("Pain"), TCLocalize("Surprise"), TCLocalize("Angry"), TCLocalize("Blink"), TCLocalize("Random")};
+		static CUi::SDropDownState s_EmoteDropDownState;
+		static CScrollRegion s_EmoteDropDownScrollRegion;
+		s_EmoteDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_EmoteDropDownScrollRegion;
+		CUIRect EmoteDropDownRect;
+		Column.HSplitTop(LineSize, &EmoteDropDownRect, &Column);
+		EmoteDropDownRect.VSplitLeft(120.0f, &Label, &EmoteDropDownRect);
+		Ui()->DoLabel(&Label, TCLocalize("Emote Type: "), FontSize, TEXTALIGN_ML);
+		g_Config.m_TcAutoEmoteType = Ui()->DoDropDown(&EmoteDropDownRect, g_Config.m_TcAutoEmoteType, s_EmoteDropDownNames.data(), s_EmoteDropDownNames.size(), s_EmoteDropDownState);
+		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+
+		Column.HSplitTop(LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("Interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
+	}
+
+	// Friend Online Notification
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFriendOnlineNotify, TCLocalize("Friend online notification"), &g_Config.m_TcFriendOnlineNotify, &Column, LineSize);
+
+	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
+
 	// ***** Anti Latency Tools ***** //
 	Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
 	s_SectionBoxes.push_back(Column);
