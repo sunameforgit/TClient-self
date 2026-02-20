@@ -2620,17 +2620,14 @@ void CGameClient::OnPredict()
 		pDummyChar = m_PredictedWorld.GetCharacterById(m_aLocalIds[!g_Config.m_ClDummy]);
 
 	bool RealPredTick = false;
-	// predict
-	// prediction actually happens here
+	
+	
 
-	int FastInputTicks = ((g_Config.m_TcFastInputAmount - 1) / 20 + 1) * g_Config.m_TcFastInput;
-
-	int FinalTickRegular = Client()->PredGameTick(g_Config.m_ClDummy); // The vanilla final tick disregarding fast input
-
-	int FinalTickSelf = FinalTickRegular + FastInputTicks; // the final tick for just our local tee
-	int FinalTickOthers = FinalTickSelf; // the final tick for all other tees
-	if(g_Config.m_TcFastInput && !g_Config.m_TcFastInputOthers)
-		FinalTickOthers = FinalTickSelf - FastInputTicks;
+	int FinalTickRegular = Client()->PredGameTick(g_Config.m_ClDummy);
+	int FinalTickSelf = FinalTickRegular + g_Config.m_TcFastInput;
+	int FinalTickOthers = FinalTickRegular;
+	if(g_Config.m_TcFastInput > 0 && g_Config.m_TcFastInputOthers)
+		FinalTickOthers = FinalTickRegular + 1;
 
 	int LocalTee = g_Config.m_ClDummy ^ m_IsDummySwapping;
 	int DummyTee = LocalTee ^ 1;
@@ -2669,7 +2666,7 @@ void CGameClient::OnPredict()
 		CNetObj_PlayerInput *pDummyInputData = !pDummyChar ? nullptr : (CNetObj_PlayerInput *)Client()->GetInput(Tick, m_IsDummySwapping ^ 1);
 		bool DummyFirst = pInputData && pDummyInputData && pDummyChar->GetCid() < pLocalChar->GetCid();
 
-		if(g_Config.m_TcFastInput && Tick > FinalTickRegular)
+		if(g_Config.m_TcFastInput > 0 && Tick > FinalTickRegular)
 		{
 			pInputData = &m_Controls.m_aFastInput[LocalTee];
 			if(g_Config.m_ClDummyCopyMoves && PredictDummy() && pDummyChar)
@@ -2787,7 +2784,7 @@ void CGameClient::OnPredict()
 			HandlePredictedEvents(Tick);
 	}
 
-	if(g_Config.m_TcFastInput)
+	if(g_Config.m_TcFastInput > 0)
 		m_PredictedWorld.CopyWorld(&m_PrevPredictedWorld);
 
 	if(g_Config.m_TcRemoveAnti)
@@ -4298,8 +4295,8 @@ vec2 CGameClient::GetFastInputPos(int ClientId)
 
 	vec2 Pos = mix(m_aClients[ClientId].m_PrevPredicted.m_Pos, m_aClients[ClientId].m_Predicted.m_Pos, PredIntraTick);
 
-	float FastInputIntra = (g_Config.m_TcFastInputAmount % 20) / 20.0f;
-	int FastInputTicks = g_Config.m_TcFastInputAmount / 20;
+	float FastInputIntra = 0.0f;
+	int FastInputTicks = g_Config.m_TcFastInput;
 
 	float CombinedIntra = PredIntraTick + FastInputIntra;
 
@@ -4359,8 +4356,8 @@ vec2 CGameClient::GetFreezePos(int ClientId)
 	m_SmoothTick = SmoothTick;
 	m_SmoothIntraTick = SmoothIntra;
 
-	float FastInputIntra = (g_Config.m_TcFastInputAmount % 20) / 20.0f;
-	int FastInputTicks = g_Config.m_TcFastInputAmount / 20;
+	float FastInputIntra = 0.0f;
+	int FastInputTicks = g_Config.m_TcFastInput;
 
 	float CombinedIntra = SmoothIntra + FastInputIntra;
 

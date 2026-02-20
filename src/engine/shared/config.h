@@ -37,6 +37,14 @@ public:
 		Maximum: Max\n \
 		Description: Desc */ \
 	int m_##Name;
+#define MACRO_CONFIG_FLT(Name, ScriptName, Def, Min, Max, Flags, Desc) \
+	/** Config variable: ScriptName\n \
+		Type: Float\n \
+		Default: Def\n \
+		Minimum: Min\n \
+		Maximum: Max\n \
+		Description: Desc */ \
+	float m_##Name;
 #define MACRO_CONFIG_COL(Name, ScriptName, Def, Flags, Desc) \
 	/** Config variable: ScriptName\n \
 		Type: Color\n \
@@ -53,6 +61,7 @@ public:
 #define SET_CONFIG_DOMAIN(ConfigDomain) ;
 #include "config_includes.h"
 #undef MACRO_CONFIG_INT
+#undef MACRO_CONFIG_FLT
 #undef MACRO_CONFIG_COL
 #undef MACRO_CONFIG_STR
 #undef SET_CONFIG_DOMAIN
@@ -68,6 +77,9 @@ namespace DefaultConfig
 #define MACRO_CONFIG_INT(Name, ScriptName, Def, Min, Max, Flags, Desc) \
 	/** Default value of the integer config variable 'ScriptName' (see CConfig::m_##Name). */ \
 	static constexpr int Name = Def;
+#define MACRO_CONFIG_FLT(Name, ScriptName, Def, Min, Max, Flags, Desc) \
+	/** Default value of the float config variable 'ScriptName' (see CConfig::m_##Name). */ \
+	static constexpr float Name = Def;
 #define MACRO_CONFIG_COL(Name, ScriptName, Def, Flags, Desc) \
 	/** Default value of the color config variable 'ScriptName' (see CConfig::m_##Name). */ \
 	static constexpr unsigned Name = Def;
@@ -79,6 +91,7 @@ namespace DefaultConfig
 #include "config_includes.h"
 #undef SET_CONFIG_DOMAIN
 #undef MACRO_CONFIG_INT
+#undef MACRO_CONFIG_FLT
 #undef MACRO_CONFIG_COL
 #undef MACRO_CONFIG_STR
 }
