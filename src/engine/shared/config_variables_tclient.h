@@ -281,3 +281,16 @@ MACRO_CONFIG_INT(TcUiCompactList, tc_ui_compact_list, 0, 0, 1, CFGFLAG_CLIENT | 
 MACRO_CONFIG_INT(TcShowhudDummyPosition, tc_showhud_dummy_position, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show ingame HUD (Dummy Position)")
 MACRO_CONFIG_INT(TcShowhudDummySpeed, tc_showhud_dummy_speed, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show ingame HUD (Dummy Speed)")
 MACRO_CONFIG_INT(TcShowhudDummyAngle, tc_showhud_dummy_angle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show ingame HUD (Dummy Aim Angle)")
+
+// Custom Features (Added by suname)
+// Auto Emote
+MACRO_CONFIG_INT(TcAutoEmoteToggle, tc_auto_emote_toggle, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically switch between emotes")
+MACRO_CONFIG_INT(TcAutoEmoteInterval, tc_auto_emote_interval, 1000, 100, 5000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Auto emote interval in milliseconds")
+MACRO_CONFIG_INT(TcAutoEmoteType, tc_auto_emote_type, 0, 0, 5, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Auto emote type (0=Happy, 1=Pain, 2=Surprise, 3=Angry, 4=Blink, 5=Random)")
+
+// Skin Steal
+MACRO_CONFIG_INT(TcHammerStealSkin, tc_hammer_steal_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Steal skin when hammer hits a player")
+MACRO_CONFIG_INT(TcHookStealSkin, tc_hook_steal_skin, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Steal skin when hook attaches to a player")
+
+// Friend Online Notification
+MACRO_CONFIG_INT(TcFriendOnlineNotify, tc_friend_online_notify, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show notification when friend comes online")

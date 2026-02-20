@@ -82,6 +82,12 @@
 #include "components/tclient/trails.h"
 #include "components/tclient/translate.h"
 #include "components/tclient/warlist.h"
+
+// Custom Features (Added by suname)
+#include "components/tclient/auto_emote.h"
+#include "components/tclient/skin_steal.h"
+#include "components/tclient/friend_notify.h"
+
 #include "components/tooltips.h"
 #include "components/touch_controls.h"
 #include "components/voting.h"
@@ -228,6 +234,11 @@ public:
 	CScripting m_Scripting;
 	CMod m_Mod;
 	CCustomCommunities m_CustomCommunities;
+
+	// Custom Features (Added by suname)
+	CAutoEmote m_AutoEmote;
+	CSkinSteal m_SkinSteal;
+	CFriendNotify m_FriendNotify;
 
 private:
 	std::vector<class CComponent *> m_vpAll;

@@ -2624,6 +2624,12 @@ if(CLIENT)
     components/tclient/statusbar.h
     components/tclient/tclient.cpp
     components/tclient/tclient.h
+    components/tclient/auto_emote.cpp
+    components/tclient/auto_emote.h
+    components/tclient/skin_steal.cpp
+    components/tclient/skin_steal.h
+    components/tclient/friend_notify.cpp
+    components/tclient/friend_notify.h
     components/tclient/trails.cpp
     components/tclient/trails.h
     components/tclient/translate.cpp
