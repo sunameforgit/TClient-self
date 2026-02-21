@@ -2624,7 +2624,8 @@ void CGameClient::OnPredict()
 	
 
 	int FinalTickRegular = Client()->PredGameTick(g_Config.m_ClDummy);
-	int FinalTickSelf = FinalTickRegular + g_Config.m_TcFastInput;
+	float FastInputTicks = g_Config.m_TcFastInput / 10.0f;
+	int FinalTickSelf = FinalTickRegular + (int)std::ceil(FastInputTicks);
 	int FinalTickOthers = FinalTickRegular;
 	if(g_Config.m_TcFastInput > 0 && g_Config.m_TcFastInputOthers)
 		FinalTickOthers = FinalTickRegular + 1;

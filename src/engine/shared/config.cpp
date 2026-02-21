@@ -188,6 +188,79 @@ void SColorConfigVariable::ResetToOld()
 
 // -----
 
+void SFloatConfigVariable::CommandCallback(IConsole::IResult *pResult, void *pUserData)
+{
+	SFloatConfigVariable *pData = static_cast<SFloatConfigVariable *>(pUserData);
+
+	if(pResult->NumArguments())
+	{
+		if(pData->CheckReadOnly())
+			return;
+
+		float Value = pResult->GetFloat(0);
+
+		// do clamping
+		if(pData->m_Min != pData->m_Max)
+		{
+			if(Value < pData->m_Min)
+				Value = pData->m_Min;
+			if(pData->m_Max != 0 && Value > pData->m_Max)
+				Value = pData->m_Max;
+		}
+
+		*pData->m_pVariable = Value;
+		if(pResult->m_ClientId != IConsole::CLIENT_ID_GAME)
+			pData->m_OldValue = Value;
+	}
+	else
+	{
+		char aBuf[32];
+		str_format(aBuf, sizeof(aBuf), "Value: %.2f", *pData->m_pVariable);
+		pData->m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "config", aBuf);
+	}
+}
+
+void SFloatConfigVariable::Register()
+{
+	m_pConsole->Register(m_pScriptName, "?f", m_Flags, CommandCallback, this, m_pHelp);
+}
+
+bool SFloatConfigVariable::IsDefault() const
+{
+	return *m_pVariable == m_Default;
+}
+
+void SFloatConfigVariable::Serialize(char *pOut, size_t Size, float Value) const
+{
+	str_format(pOut, Size, "%s %.2f", m_pScriptName, Value);
+}
+
+void SFloatConfigVariable::Serialize(char *pOut, size_t Size) const
+{
+	Serialize(pOut, Size, *m_pVariable);
+}
+
+void SFloatConfigVariable::SetValue(float Value)
+{
+	if(CheckReadOnly())
+		return;
+	char aBuf[IConsole::CMDLINE_LENGTH];
+	Serialize(aBuf, sizeof(aBuf), Value);
+	ExecuteLine(aBuf);
+}
+
+void SFloatConfigVariable::ResetToDefault()
+{
+	SetValue(m_Default);
+}
+
+void SFloatConfigVariable::ResetToOld()
+{
+	*m_pVariable = m_OldValue;
+}
+
+// -----
+
 SStringConfigVariable::SStringConfigVariable(IConsole *pConsole, const char *pScriptName, EVariableType Type, int Flags, const char *pHelp, char *pStr, const char *pDefault, size_t MaxSize, char *pOldValue) :
 	SConfigVariable(pConsole, pScriptName, Type, Flags, pHelp),
 	m_pStr(pStr),
@@ -297,6 +370,12 @@ void CConfigManager::Init()
 		AddVariable(m_ConfigHeap.Allocate<SIntConfigVariable>(m_pConsole, #ScriptName, SConfigVariable::VAR_INT, Flags, pHelp, &g_Config.m_##Name, Def, Min, Max)); \
 	}
 
+#define MACRO_CONFIG_FLT(Name, ScriptName, Def, Min, Max, Flags, Desc) \
+	{ \
+		const char *pHelp = Min == Max ? Desc " (default: " #Def ")" : (Max == 0 ? Desc " (default: " #Def ", min: " #Min ")" : Desc " (default: " #Def ", min: " #Min ", max: " #Max ")"); \
+		AddVariable(m_ConfigHeap.Allocate<SFloatConfigVariable>(m_pConsole, #ScriptName, SConfigVariable::VAR_FLOAT, Flags, pHelp, &g_Config.m_##Name, Def, Min, Max)); \
+	}
+
 #define MACRO_CONFIG_COL(Name, ScriptName, Def, Flags, Desc) \
 	{ \
 		const size_t HelpSize = (size_t)str_length(Desc) + 32; \
@@ -318,6 +397,7 @@ void CConfigManager::Init()
 #include "config_includes.h"
 #undef SET_CONFIG_DOMAIN
 #undef MACRO_CONFIG_INT
+#undef MACRO_CONFIG_FLT
 #undef MACRO_CONFIG_COL
 #undef MACRO_CONFIG_STR
 

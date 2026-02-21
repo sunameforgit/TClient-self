@@ -131,6 +131,7 @@ struct SConfigVariable
 	enum EVariableType
 	{
 		VAR_INT,
+		VAR_FLOAT,
 		VAR_COLOR,
 		VAR_STRING,
 	};
@@ -234,6 +235,37 @@ struct SColorConfigVariable : public SConfigVariable
 	void Serialize(char *pOut, size_t Size, unsigned Value) const;
 	void Serialize(char *pOut, size_t Size) const override;
 	void SetValue(unsigned Value);
+	void ResetToDefault() override;
+	void ResetToOld() override;
+};
+
+struct SFloatConfigVariable : public SConfigVariable
+{
+	float *m_pVariable;
+	float m_Default;
+	float m_Min;
+	float m_Max;
+	float m_OldValue;
+
+	SFloatConfigVariable(IConsole *pConsole, const char *pScriptName, EVariableType Type, int Flags, const char *pHelp, float *pVariable, float Default, float Min, float Max) :
+		SConfigVariable(pConsole, pScriptName, Type, Flags, pHelp),
+		m_pVariable(pVariable),
+		m_Default(Default),
+		m_Min(Min),
+		m_Max(Max),
+		m_OldValue(Default)
+	{
+		*m_pVariable = m_Default;
+	}
+
+	~SFloatConfigVariable() override = default;
+
+	static void CommandCallback(IConsole::IResult *pResult, void *pUserData);
+	void Register() override;
+	bool IsDefault() const override;
+	void Serialize(char *pOut, size_t Size, float Value) const;
+	void Serialize(char *pOut, size_t Size) const override;
+	void SetValue(float Value);
 	void ResetToDefault() override;
 	void ResetToOld() override;
 };

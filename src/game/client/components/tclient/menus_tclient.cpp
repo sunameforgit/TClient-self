@@ -554,8 +554,12 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
 	// Fast Input
-	Column.HSplitTop(LineSize, &Button, &Column);
-	Ui()->DoScrollbarOption(&g_Config.m_TcFastInput, &g_Config.m_TcFastInput, &Button, TCLocalize("Fast Input"), 0, 5, &CUi::ms_LinearScrollbarScale, 0, "ticks");
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInput, TCLocalize("Fast Input (-20ms visual latency)"), &g_Config.m_TcFastInput, &Column, LineSize);
+	if(g_Config.m_TcFastInput > 0)
+	{
+		Column.HSplitTop(LineSize, &Button, &Column);
+		DoSliderWithScaledValue(&g_Config.m_TcFastInput, &g_Config.m_TcFastInput, &Button, TCLocalize("Fast Input Amount"), 0, 50, 10, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, " (x0.1)");
+	}
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInputOthers, TCLocalize("Extra tick other tees (increases other tees latency, makes dragging slightly easier when using fast input)"), &g_Config.m_TcFastInputOthers, &Column, LineSize);
 
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
@@ -592,11 +596,6 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 
 	// Friend Online Notification
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFriendOnlineNotify, TCLocalize("Friend online notification"), &g_Config.m_TcFriendOnlineNotify, &Column, LineSize);
-
-	// Fast Input
-	Column.HSplitTop(LineSize, &Button, &Column);
-	Ui()->DoScrollbarOption(&g_Config.m_TcFastInput, &g_Config.m_TcFastInput, &Button, TCLocalize("Fast Input"), 0, 5, &CUi::ms_LinearScrollbarScale, 0, "ticks");
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInputOthers, TCLocalize("Extra tick other tees (increases other tees latency, makes dragging slightly easier when using fast input)"), &g_Config.m_TcFastInputOthers, &Column, LineSize);
 
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
