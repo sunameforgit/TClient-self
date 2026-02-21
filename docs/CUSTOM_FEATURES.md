@@ -45,44 +45,61 @@ private:
     int64_t m_LastStealTime;    // 上次窃取时间（用于冷却）
     int m_LastHookedPlayer;      // 上次钩中的玩家ID
     bool m_WasHooked;            // 是否正在钩中状态
-    int m_LastFireTick;          // 上次攻击tick（用于锤子检测）
+    bool m_WasFiringHammer;      // 是否正在锤击（用于检测锤击开始）
     int m_LastStolenFrom;        // 上次窃取的玩家ID（防止重复）
     
-    void StealFromPredictedHammerHit(CCharacter *pLocalChar);
+    void StealFromHammerHit();
 };
 ```
 
 ### 锤子窃取检测
 
-**原理**: 使用预测世界检测锤子攻击
+**原理**: 使用 snap 数据的 `m_AttackTick` 变化检测锤子攻击
 
 ```cpp
-// 获取预测角色
-CCharacter *pLocalChar = GameClient()->m_PredictedWorld.GetCharacterById(LocalId);
-if(pLocalChar && pLocalChar->GetActiveWeapon() == WEAPON_HAMMER)
+// 获取当前和上一帧的角色数据
+const CNetObj_Character &Char = GameClient()->m_Snap.m_aCharacters[LocalId].m_Cur;
+const CNetObj_Character &PrevChar = GameClient()->m_Snap.m_aCharacters[LocalId].m_Prev;
+
+// 检测条件：武器是锤子 且 攻击tick变化
+bool IsFiringHammer = (Char.m_Weapon == WEAPON_HAMMER) && 
+                      (Char.m_AttackTick != PrevChar.m_AttackTick);
+
+if(IsFiringHammer && !m_WasFiringHammer)
 {
-    int CurrentAttackTick = pLocalChar->GetAttackTick();
-    if(CurrentAttackTick > m_LastFireTick)
-    {
-        // 锤子刚攻击，查找命中目标
-        StealFromPredictedHammerHit(pLocalChar);
-        m_LastFireTick = CurrentAttackTick;
-    }
+    // 锤子刚攻击，查找命中目标
+    StealFromHammerHit();
 }
+
+m_WasFiringHammer = IsFiringHammer;
 ```
 
-**目标查找**: 使用游戏原始逻辑查找命中目标
+**目标查找**: 在锤子攻击范围内查找最合适的玩家
 
 ```cpp
-float ProximityRadius = pLocalChar->GetProximityRadius();
-float Angle = pLocalChar->Core()->m_Angle * (pi / 180.0f) / 256.0f;
+// 计算锤子攻击位置
+vec2 LocalPos = vec2(Local.m_X, Local.m_Y);
+float Angle = Local.m_Angle * (pi / 180.0f) / 256.0f;
 vec2 Direction = vec2(cosf(Angle), sinf(Angle));
-vec2 ProjStartPos = pLocalChar->Core()->m_Pos + Direction * (ProximityRadius * 0.75f);
+vec2 HammerPos = LocalPos + Direction * 28.0f;
 
-// 使用 FindEntities 查找范围内的玩家（与游戏逻辑一致）
-CEntity *apEnts[MAX_CLIENTS];
-int Num = GameClient()->m_PredictedWorld.FindEntities(ProjStartPos, ProximityRadius * 0.5f, apEnts,
-    MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+// 在范围内查找玩家，选择最在前方的目标
+for(int i = 0; i < MAX_CLIENTS; i++)
+{
+    float Dist = length(HammerPos - TargetPos);
+    if(Dist > 40.0f) continue;  // 超出范围
+    
+    // 计算方向对齐度
+    vec2 ToTarget = normalize(TargetPos - LocalPos);
+    float Alignment = dot(Direction, ToTarget);
+    
+    // 选择在前方且距离最近的目标
+    if(Alignment > 0.0f)
+    {
+        float Score = Alignment * (1.0f - Dist / 40.0f);
+        // 选择得分最高的目标
+    }
+}
 ```
 
 ### 钩子窃取检测
@@ -129,7 +146,7 @@ if(!UseCustomColor)
 
 ### 防Spam机制
 
-- **冷却时间**: 50ms
+- **冷却时间**: 10ms（极短延迟，几乎即时响应）
 - **实现**: 使用 `time()` 比较上次窃取时间
 - **防重复**: 使用 `m_LastStolenFrom` 防止钩子和锤子同时触发时重复窃取
 
@@ -150,6 +167,16 @@ if(str_startswith(pLine, "/stealskin "))
     int TargetId = str_toint(pIdStr);
     GameClient()->StealSkinFromChat(TargetId);
     return; // 不发送到服务器
+}
+```
+
+**GameClient 实现**: `src/game/client/gameclient.cpp`
+
+```cpp
+void CGameClient::StealSkinFromChat(int TargetId)
+{
+    // 直接调用皮肤窃取组件
+    m_SkinSteal.StealSkin(TargetId);
 }
 ```
 
@@ -372,10 +399,12 @@ Console()->ExecuteLine(aBuf, -1);
 ## 最后更新
 
 - **日期**: 2025-01-21
-- **版本**: TClient Custom Features v1.1
+- **版本**: TClient Custom Features v1.2
 - **更新内容**:
-  - 添加 `/stealskin` 聊天命令
+  - 修复 `/stealskin` 聊天命令（使用 `m_SkinSteal` 直接调用）
+  - 优化锤子检测（使用 `m_AttackTick` 变化，更可靠）
+  - 移除预测世界依赖，只使用 snap 数据
+  - 减少皮肤窃取冷却时间至 10ms（几乎即时响应）
   - 优化原皮窃取逻辑（先重置颜色）
   - 表情持续时间改为间隔的一半
-  - 减少皮肤窃取冷却时间至 50ms
   - 添加防重复窃取机制
