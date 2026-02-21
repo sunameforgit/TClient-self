@@ -8,17 +8,19 @@ class CSkinSteal : public CComponent
 public:
 	virtual int Sizeof() const override { return sizeof(*this); }
 	virtual void OnInit() override;
-	
-	// Called when hammer hits a player
-	void OnHammerHit(int TargetId);
-	
-	// Called when hook attaches to a player
-	void OnHookAttach(int TargetId);
+	virtual void OnRender() override;
 
 private:
-	void StealSkin(int TargetId);
 	int64_t m_LastStealTime;
+	int m_LastHookedPlayer;
+	bool m_WasHooked;
+	bool m_WasFiringHammer;
+	
 	static constexpr int64_t STEAL_COOLDOWN = 500; // ms
+	
+	void StealSkin(int TargetId);
+	void CheckHammerHit();
+	void CheckHookAttach();
 };
 
 #endif // GAME_CLIENT_COMPONENTS_TCLIENT_SKIN_STEAL_H

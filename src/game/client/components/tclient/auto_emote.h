@@ -13,9 +13,11 @@ public:
 private:
 	int64_t m_LastEmoteTime;
 	bool m_WasChatOpen;
+	bool m_IsNormalState; // true = normal, false = selected emote
 	
 	void SendEmote(int EmoteType);
 	const char* GetEmoteCommand(int EmoteType);
+	int GetCurrentEmoteType();
 };
 
 #endif // GAME_CLIENT_COMPONENTS_TCLIENT_AUTO_EMOTE_H

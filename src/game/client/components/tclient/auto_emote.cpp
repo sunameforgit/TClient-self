@@ -7,6 +7,7 @@ void CAutoEmote::OnInit()
 {
 	m_LastEmoteTime = 0;
 	m_WasChatOpen = false;
+	m_IsNormalState = true; // Start with normal
 }
 
 void CAutoEmote::OnRender()
@@ -26,16 +27,50 @@ void CAutoEmote::OnRender()
 
 	m_LastEmoteTime = CurrentTime;
 
-	int EmoteType = g_Config.m_TcAutoEmoteType;
-	
-	// Random mode
-	if(EmoteType == 5)
-	{
-		static const int s_aAllEmotes[] = {EMOTE_NORMAL, EMOTE_HAPPY, EMOTE_PAIN, EMOTE_SURPRISE, EMOTE_ANGRY, EMOTE_BLINK};
-		EmoteType = s_aAllEmotes[(time_get() / time_freq()) % 6];
-	}
+	// Toggle between normal and selected emote
+	m_IsNormalState = !m_IsNormalState;
 
+	int EmoteType = GetCurrentEmoteType();
 	SendEmote(EmoteType);
+}
+
+int CAutoEmote::GetCurrentEmoteType()
+{
+	int SelectedType = g_Config.m_TcAutoEmoteType;
+	
+	// Random mode (5 = Random)
+	if(SelectedType == 5)
+	{
+		if(m_IsNormalState)
+		{
+			return EMOTE_NORMAL;
+		}
+		else
+		{
+			// Random emote from all available emotes (excluding normal)
+			static const int s_aRandomEmotes[] = {EMOTE_HAPPY, EMOTE_PAIN, EMOTE_SURPRISE, EMOTE_ANGRY, EMOTE_BLINK};
+			return s_aRandomEmotes[(time_get() / time_freq()) % 5];
+		}
+	}
+	
+	// Normal mode: toggle between NORMAL and selected emote
+	if(m_IsNormalState)
+	{
+		return EMOTE_NORMAL;
+	}
+	else
+	{
+		// Map config value to emote type
+		switch(SelectedType)
+		{
+			case 0: return EMOTE_HAPPY;
+			case 1: return EMOTE_PAIN;
+			case 2: return EMOTE_SURPRISE;
+			case 3: return EMOTE_ANGRY;
+			case 4: return EMOTE_BLINK;
+			default: return EMOTE_HAPPY;
+		}
+	}
 }
 
 void CAutoEmote::SendEmote(int EmoteType)
