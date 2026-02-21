@@ -17,6 +17,7 @@ private:
 	int m_LastHookedPlayer;
 	bool m_WasHooked;
 	int m_LastFireTick;
+	int m_LastStolenFrom;
 	
 	void StealSkin(int TargetId);
 	void StealFromPredictedHammerHit(CCharacter *pLocalChar);

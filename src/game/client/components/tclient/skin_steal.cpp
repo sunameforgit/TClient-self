@@ -11,6 +11,7 @@ void CSkinSteal::OnInit()
 	m_LastHookedPlayer = -1;
 	m_WasHooked = false;
 	m_LastFireTick = 0;
+	m_LastStolenFrom = -1;
 }
 
 void CSkinSteal::OnRender()
@@ -24,24 +25,8 @@ void CSkinSteal::OnRender()
 	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
 		return;
 	
-	// Check hammer hit - use predicted world for more accurate detection
-	if(g_Config.m_TcHammerStealSkin)
-	{
-		// Get predicted character for hammer hit detection
-		CCharacter *pLocalChar = GameClient()->m_PredictedWorld.GetCharacterById(GameClient()->m_Snap.m_LocalClientId);
-		if(pLocalChar && pLocalChar->GetActiveWeapon() == WEAPON_HAMMER)
-		{
-			int CurrentAttackTick = pLocalChar->GetAttackTick();
-			if(CurrentAttackTick > m_LastFireTick)
-			{
-				// Hammer just fired, use predicted world to find hit target
-				StealFromPredictedHammerHit(pLocalChar);
-				m_LastFireTick = CurrentAttackTick;
-			}
-		}
-	}
-	
-	// Check hook attach
+	// Check hook attach first (higher priority)
+	bool HookTriggered = false;
 	if(g_Config.m_TcHookStealSkin)
 	{
 		// Check if hook is attached to a player
@@ -74,11 +59,30 @@ void CSkinSteal::OnRender()
 		if(IsHooked && !m_WasHooked && HookedPlayer != m_LastHookedPlayer)
 		{
 			StealSkin(HookedPlayer);
+			HookTriggered = true;
+			m_LastStolenFrom = HookedPlayer;
 		}
 		
 		m_WasHooked = IsHooked;
 		if(IsHooked)
 			m_LastHookedPlayer = HookedPlayer;
+	}
+	
+	// Check hammer hit (skip if hook just triggered to avoid double steal)
+	if(g_Config.m_TcHammerStealSkin && !HookTriggered)
+	{
+		// Get predicted character for hammer hit detection
+		CCharacter *pLocalChar = GameClient()->m_PredictedWorld.GetCharacterById(GameClient()->m_Snap.m_LocalClientId);
+		if(pLocalChar && pLocalChar->GetActiveWeapon() == WEAPON_HAMMER)
+		{
+			int CurrentAttackTick = pLocalChar->GetAttackTick();
+			if(CurrentAttackTick > m_LastFireTick)
+			{
+				// Hammer just fired, use predicted world to find hit target
+				StealFromPredictedHammerHit(pLocalChar);
+				m_LastFireTick = CurrentAttackTick;
+			}
+		}
 	}
 }
 
@@ -110,6 +114,13 @@ void CSkinSteal::StealFromPredictedHammerHit(CCharacter *pLocalChar)
 		// Check if can collide
 		if(!pLocalChar->CanCollide(TargetId))
 			continue;
+		
+		// Skip if we just stole from this player via hook (avoid double steal)
+		if(TargetId == m_LastStolenFrom)
+		{
+			m_LastStolenFrom = -1;  // Reset after skipping
+			continue;
+		}
 		
 		// Found a valid target - steal skin
 		StealSkin(TargetId);
@@ -143,18 +154,26 @@ void CSkinSteal::StealSkin(int TargetId)
 	// Use the existing skin profiles system
 	char aBuf[512];
 	
-	// Enable custom colors
-	Console()->ExecuteLine("player_use_custom_color 1", -1);
+	// Check if target uses custom colors
+	bool UseCustomColor = Target.m_UseCustomColor;
+	
+	// Set custom color flag (0 or 1 based on target)
+	str_format(aBuf, sizeof(aBuf), "player_use_custom_color %d", UseCustomColor ? 1 : 0);
+	Console()->ExecuteLine(aBuf, -1);
 	
 	// Set skin name
 	str_format(aBuf, sizeof(aBuf), "player_skin %s", Target.m_aSkinName);
 	Console()->ExecuteLine(aBuf, -1);
 	
-	// Set body color
-	str_format(aBuf, sizeof(aBuf), "player_color_body %d", Target.m_ColorBody);
-	Console()->ExecuteLine(aBuf, -1);
-	
-	// Set feet color
-	str_format(aBuf, sizeof(aBuf), "player_color_feet %d", Target.m_ColorFeet);
-	Console()->ExecuteLine(aBuf, -1);
+	// Only set colors if target uses custom colors
+	if(UseCustomColor)
+	{
+		// Set body color
+		str_format(aBuf, sizeof(aBuf), "player_color_body %d", Target.m_ColorBody);
+		Console()->ExecuteLine(aBuf, -1);
+		
+		// Set feet color
+		str_format(aBuf, sizeof(aBuf), "player_color_feet %d", Target.m_ColorFeet);
+		Console()->ExecuteLine(aBuf, -1);
+	}
 }
