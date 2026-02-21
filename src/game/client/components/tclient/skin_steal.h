@@ -14,7 +14,7 @@ private:
 	int64_t m_LastStealTime;
 	int m_LastHookedPlayer;
 	bool m_WasHooked;
-	bool m_WasFiring;
+	int m_LastFireTick;
 	
 	void StealSkin(int TargetId);
 	void StealFromNearestPlayer();

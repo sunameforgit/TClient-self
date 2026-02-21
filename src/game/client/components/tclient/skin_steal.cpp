@@ -10,7 +10,7 @@ void CSkinSteal::OnInit()
 	m_LastStealTime = 0;
 	m_LastHookedPlayer = -1;
 	m_WasHooked = false;
-	m_WasFiring = false;
+	m_LastFireTick = 0;
 }
 
 void CSkinSteal::OnRender()
@@ -18,9 +18,8 @@ void CSkinSteal::OnRender()
 	if(!g_Config.m_TcHammerStealSkin && !g_Config.m_TcHookStealSkin)
 		return;
 	
-	// Get local character from snap (more reliable than predicted world)
+	// Get local character from snap
 	const CNetObj_Character &Char = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Cur;
-	const CNetObj_Character &PrevChar = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Prev;
 	
 	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
 		return;
@@ -28,17 +27,13 @@ void CSkinSteal::OnRender()
 	// Check hammer hit
 	if(g_Config.m_TcHammerStealSkin)
 	{
-		// Detect hammer fire by checking if attack tick changed and weapon is hammer
-		bool IsFiring = (Char.m_Weapon == WEAPON_HAMMER) && 
-		                (Char.m_AttackTick != PrevChar.m_AttackTick);
-		
-		if(IsFiring && !m_WasFiring)
+		// Detect hammer fire by checking if weapon is hammer and attack tick is new
+		if(Char.m_Weapon == WEAPON_HAMMER && Char.m_AttackTick > m_LastFireTick)
 		{
-			// Hammer just hit something, find target
+			// Hammer just fired, find target
 			StealFromNearestPlayer();
+			m_LastFireTick = Char.m_AttackTick;
 		}
-		
-		m_WasFiring = IsFiring;
 	}
 	
 	// Check hook attach
