@@ -681,6 +681,9 @@ public:
 	virtual void OnStartRound();
 	virtual void OnFlagGrab(int TeamId);
 	void OnWindowResize() override;
+	
+	// TClient: Steal skin from chat command
+	void StealSkinFromChat(int TargetId);
 
 	void InitializeLanguage() override;
 	bool m_LanguageChanged = false;

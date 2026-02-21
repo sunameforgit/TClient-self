@@ -1471,6 +1471,21 @@ void CChat::SendChat(int Team, const char *pLine)
 	if(*str_utf8_skip_whitespaces(pLine) == '\0')
 		return;
 
+	// Handle /stealskin command
+	if(str_startswith(pLine, "/stealskin "))
+	{
+		const char *pIdStr = pLine + 11; // Skip "/stealskin "
+		int TargetId = str_toint(pIdStr);
+		
+		// Validate player ID
+		if(TargetId >= 0 && TargetId < MAX_CLIENTS)
+		{
+			// Call skin steal function through gameclient
+			GameClient()->StealSkinFromChat(TargetId);
+		}
+		return; // Don't send to server
+	}
+
 	m_LastChatSend = time();
 
 	if(GameClient()->Client()->IsSixup())

@@ -11,6 +11,9 @@ public:
 	virtual int Sizeof() const override { return sizeof(*this); }
 	virtual void OnInit() override;
 	virtual void OnRender() override;
+	
+	// Called from chat command
+	void StealSkin(int TargetId);
 
 private:
 	int64_t m_LastStealTime;
@@ -19,7 +22,6 @@ private:
 	int m_LastFireTick;
 	int m_LastStolenFrom;
 	
-	void StealSkin(int TargetId);
 	void StealFromPredictedHammerHit(CCharacter *pLocalChar);
 };
 

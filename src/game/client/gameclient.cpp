@@ -37,6 +37,7 @@
 #include "components/spectator.h"
 #include "components/statboard.h"
 #include "components/voting.h"
+#include "components/tclient/skin_steal.h"
 #include "lineinput.h"
 #include "prediction/entities/character.h"
 #include "prediction/entities/projectile.h"
@@ -1330,6 +1331,19 @@ void CGameClient::OnWindowResize()
 		pComponent->OnWindowResize();
 
 	Ui()->OnWindowResize();
+}
+
+void CGameClient::StealSkinFromChat(int TargetId)
+{
+	// Find skin steal component and call steal function
+	for(auto &pComponent : m_vpAll)
+	{
+		if(pComponent->Sizeof() == sizeof(CSkinSteal))
+		{
+			static_cast<CSkinSteal *>(pComponent)->StealSkin(TargetId);
+			break;
+		}
+	}
 }
 
 void CGameClient::OnLanguageChange()
