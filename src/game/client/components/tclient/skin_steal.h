@@ -19,10 +19,10 @@ private:
 	int64_t m_LastStealTime;
 	int m_LastHookedPlayer;
 	bool m_WasHooked;
-	int m_LastFireTick;
+	bool m_WasFiringHammer;
 	int m_LastStolenFrom;
 	
-	void StealFromPredictedHammerHit(CCharacter *pLocalChar);
+	void StealFromHammerHit();
 };
 
 #endif // GAME_CLIENT_COMPONENTS_TCLIENT_SKIN_STEAL_H

@@ -1335,15 +1335,8 @@ void CGameClient::OnWindowResize()
 
 void CGameClient::StealSkinFromChat(int TargetId)
 {
-	// Find skin steal component and call steal function
-	for(auto &pComponent : m_vpAll)
-	{
-		if(pComponent->Sizeof() == sizeof(CSkinSteal))
-		{
-			static_cast<CSkinSteal *>(pComponent)->StealSkin(TargetId);
-			break;
-		}
-	}
+	// Call skin steal function directly
+	m_SkinSteal.StealSkin(TargetId);
 }
 
 void CGameClient::OnLanguageChange()
