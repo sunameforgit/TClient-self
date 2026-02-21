@@ -52,16 +52,25 @@ private:
 // 检测条件：武器是锤子 且 攻击tick增加
 if(Char.m_Weapon == WEAPON_HAMMER && Char.m_AttackTick > m_LastFireTick)
 {
-    StealFromNearestPlayer();
+    StealFromHammerHit();
     m_LastFireTick = Char.m_AttackTick;
 }
 ```
 
-**目标查找**: 在锤子攻击范围内查找最近的玩家
+**目标查找**: 综合考虑距离和攻击方向，选择最可能的目标
 
 ```cpp
-vec2 HammerPos = LocalPos + Direction * 28.0f;  // 锤子攻击位置
-// 查找距离 < 40.0f 的最近玩家
+// 1. 计算锤子攻击位置（与游戏逻辑一致）
+vec2 ProjStartPos = LocalPos + Direction * 28.0f * 0.75f;
+
+// 2. 在攻击范围内查找所有玩家
+// 3. 计算每个目标的得分：
+//    - Alignment: 与攻击方向的夹角（1.0 = 正前方，-1.0 = 后方）
+//    - Distance: 与攻击点的距离
+//    - Score = Alignment * (1.0 - Dist / 14.0f)
+// 4. 选择得分最高且在正前方的目标
+
+// 如果没有找到合适的目标，回退到最近玩家查找
 ```
 
 ### 钩子窃取检测

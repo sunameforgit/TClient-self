@@ -17,6 +17,7 @@ private:
 	int m_LastFireTick;
 	
 	void StealSkin(int TargetId);
+	void StealFromHammerHit();
 	void StealFromNearestPlayer();
 };
 

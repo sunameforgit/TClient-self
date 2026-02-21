@@ -30,8 +30,8 @@ void CSkinSteal::OnRender()
 		// Detect hammer fire by checking if weapon is hammer and attack tick is new
 		if(Char.m_Weapon == WEAPON_HAMMER && Char.m_AttackTick > m_LastFireTick)
 		{
-			// Hammer just fired, find target
-			StealFromNearestPlayer();
+			// Hammer just fired, find all targets in hammer range and steal from the one we're aiming at
+			StealFromHammerHit();
 			m_LastFireTick = Char.m_AttackTick;
 		}
 	}
@@ -74,6 +74,69 @@ void CSkinSteal::OnRender()
 		m_WasHooked = IsHooked;
 		if(IsHooked)
 			m_LastHookedPlayer = HookedPlayer;
+	}
+}
+
+void CSkinSteal::StealFromHammerHit()
+{
+	// Get local character
+	const CNetObj_Character &Local = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Cur;
+	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
+		return;
+	
+	// Calculate hammer hit position (same as game logic)
+	vec2 LocalPos = vec2(Local.m_X, Local.m_Y);
+	float Angle = Local.m_Angle * (pi / 180.0f) / 256.0f;
+	vec2 Direction = vec2(cosf(Angle), sinf(Angle));
+	vec2 ProjStartPos = LocalPos + Direction * 28.0f * 0.75f;  // ProximityRadius * 0.75f
+	
+	// Find all players in hammer range
+	int BestTarget = -1;
+	float BestScore = -1.0f;
+	
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(i == GameClient()->m_Snap.m_LocalClientId)
+			continue;
+		
+		if(!GameClient()->m_Snap.m_aCharacters[i].m_Active)
+			continue;
+		
+		const CNetObj_Character &Target = GameClient()->m_Snap.m_aCharacters[i].m_Cur;
+		vec2 TargetPos = vec2(Target.m_X, Target.m_Y);
+		
+		// Check if in hammer range (0.5f * ProximityRadius = 14.0f)
+		float Dist = length(TargetPos - ProjStartPos);
+		if(Dist > 14.0f)
+			continue;
+		
+		// Calculate score based on:
+		// 1. Distance (closer is better)
+		// 2. Alignment with attack direction (more in front is better)
+		vec2 ToTarget = normalize(TargetPos - LocalPos);
+		float Alignment = dot(Direction, ToTarget);  // 1.0 = directly in front, -1.0 = behind
+		
+		// Score: prefer targets in front (Alignment > 0) and closer
+		if(Alignment > 0.0f)
+		{
+			float Score = Alignment * (1.0f - Dist / 14.0f);  // Higher score = better target
+			if(Score > BestScore)
+			{
+				BestScore = Score;
+				BestTarget = i;
+			}
+		}
+	}
+	
+	// If found a valid target in front, steal from it
+	if(BestTarget >= 0 && BestScore > 0.0f)
+	{
+		StealSkin(BestTarget);
+	}
+	else
+	{
+		// Fallback: steal from nearest player in range (original behavior)
+		StealFromNearestPlayer();
 	}
 }
 
