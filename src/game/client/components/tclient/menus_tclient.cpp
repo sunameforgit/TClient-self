@@ -558,7 +558,7 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	if(g_Config.m_TcFastInput > 0)
 	{
 		Column.HSplitTop(LineSize, &Button, &Column);
-		DoSliderWithScaledValue(&g_Config.m_TcFastInput, &g_Config.m_TcFastInput, &Button, TCLocalize("Fast Input Amount"), 0, 50, 10, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, " (x0.1)");
+		DoSliderWithScaledValue(&g_Config.m_TcFastInput, &g_Config.m_TcFastInput, &Button, TCLocalize("Fast Input Amount"), 0, 50, 1, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, " (x0.1)");
 	}
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFastInputOthers, TCLocalize("Extra tick other tees (increases other tees latency, makes dragging slightly easier when using fast input)"), &g_Config.m_TcFastInputOthers, &Column, LineSize);
 
