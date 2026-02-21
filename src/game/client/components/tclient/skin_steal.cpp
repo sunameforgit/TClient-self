@@ -29,10 +29,9 @@ void CSkinSteal::CheckHammerHit()
 	if(!pLocalChar)
 		return;
 	
-	// Check if currently firing hammer using the controls input data
-	int Dummy = g_Config.m_ClDummy;
+	// Check if currently firing hammer using the character's input
 	bool IsFiringHammer = pLocalChar->GetActiveWeapon() == WEAPON_HAMMER && 
-	                      GameClient()->m_Controls.m_aInputData[Dummy].m_Fire;
+	                      pLocalChar->Core()->m_Input.m_Fire;
 	
 	// Detect hammer fire start
 	if(IsFiringHammer && !m_WasFiringHammer)
@@ -95,9 +94,9 @@ void CSkinSteal::CheckHookAttach()
 
 void CSkinSteal::StealSkin(int TargetId)
 {
-	// Check cooldown
+	// Check cooldown (reduced to 100ms for faster response)
 	int64_t CurrentTime = time();
-	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < STEAL_COOLDOWN)
+	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 100)
 		return;
 	
 	// Validate target
@@ -112,7 +111,17 @@ void CSkinSteal::StealSkin(int TargetId)
 	m_LastStealTime = CurrentTime;
 	
 	// Use the existing skin profiles system
-	char aBuf[256];
+	char aBuf[512];
+	
+	// Set skin name
 	str_format(aBuf, sizeof(aBuf), "player_skin %s", Target.m_aSkinName);
+	Console()->ExecuteLine(aBuf, -1);
+	
+	// Set body color
+	str_format(aBuf, sizeof(aBuf), "player_color_body %d", Target.m_ColorBody);
+	Console()->ExecuteLine(aBuf, -1);
+	
+	// Set feet color
+	str_format(aBuf, sizeof(aBuf), "player_color_feet %d", Target.m_ColorFeet);
 	Console()->ExecuteLine(aBuf, -1);
 }

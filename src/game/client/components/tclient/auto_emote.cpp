@@ -5,7 +5,7 @@
 
 void CAutoEmote::OnInit()
 {
-	m_LastEmoteTime = 0;
+	m_LastEmoteTime = time();
 	m_WasChatOpen = false;
 	m_IsNormalState = true; // Start with normal
 }
@@ -78,9 +78,10 @@ void CAutoEmote::SendEmote(int EmoteType)
 	const char *pCmd = GetEmoteCommand(EmoteType);
 	if(pCmd)
 	{
+		// Use emote command directly instead of chat for faster response
 		char aBuf[32];
-		str_format(aBuf, sizeof(aBuf), "/emote %s 9999", pCmd);
-		GameClient()->m_Chat.SendChatQueued(aBuf);
+		str_format(aBuf, sizeof(aBuf), "emote %s 9999", pCmd);
+		Console()->ExecuteLine(aBuf, -1);
 	}
 }
 
