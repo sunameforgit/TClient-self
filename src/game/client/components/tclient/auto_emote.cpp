@@ -79,8 +79,9 @@ void CAutoEmote::SendEmote(int EmoteType)
 	if(pCmd)
 	{
 		// Use chat command to send emote (like in emoticon.cpp)
+		// Use short duration (200ms) for quick switching
 		char aBuf[64];
-		str_format(aBuf, sizeof(aBuf), "/emote %s %d", pCmd, g_Config.m_ClEyeDuration);
+		str_format(aBuf, sizeof(aBuf), "/emote %s 200", pCmd);
 		GameClient()->m_Chat.SendChatQueued(aBuf);
 	}
 }

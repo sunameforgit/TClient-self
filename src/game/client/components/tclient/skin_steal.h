@@ -14,11 +14,10 @@ private:
 	int64_t m_LastStealTime;
 	int m_LastHookedPlayer;
 	bool m_WasHooked;
-	int m_LastAttackTick;
+	bool m_WasFiring;
 	
 	void StealSkin(int TargetId);
-	void CheckHammerHit();
-	void CheckHookAttach();
+	void StealFromNearestPlayer();
 };
 
 #endif // GAME_CLIENT_COMPONENTS_TCLIENT_SKIN_STEAL_H

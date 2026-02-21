@@ -10,94 +10,125 @@ void CSkinSteal::OnInit()
 	m_LastStealTime = 0;
 	m_LastHookedPlayer = -1;
 	m_WasHooked = false;
-	m_LastAttackTick = -1;
+	m_WasFiring = false;
 }
 
 void CSkinSteal::OnRender()
 {
-	if(g_Config.m_TcHammerStealSkin)
-		CheckHammerHit();
-	
-	if(g_Config.m_TcHookStealSkin)
-		CheckHookAttach();
-}
-
-void CSkinSteal::CheckHammerHit()
-{
-	// Get local character
-	CCharacter *pLocalChar = GameClient()->m_PredictedWorld.GetCharacterById(GameClient()->m_Snap.m_LocalClientId);
-	if(!pLocalChar)
+	if(!g_Config.m_TcHammerStealSkin && !g_Config.m_TcHookStealSkin)
 		return;
 	
-	// Check if hammer was just fired using attack tick
-	int CurrentAttackTick = pLocalChar->GetAttackTick();
-	bool HammerJustFired = pLocalChar->GetActiveWeapon() == WEAPON_HAMMER && 
-	                       CurrentAttackTick != m_LastAttackTick &&
-	                       CurrentAttackTick == GameClient()->m_PredictedWorld.GameTick();
+	// Get local character from snap (more reliable than predicted world)
+	const CNetObj_Character &Char = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Cur;
+	const CNetObj_Character &PrevChar = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Prev;
 	
-	if(HammerJustFired)
+	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
+		return;
+	
+	// Check hammer hit
+	if(g_Config.m_TcHammerStealSkin)
 	{
-		// Hammer was just fired, check for hits
-		// Get direction from angle (m_Angle is in units, 1 unit = 1/256 of a full rotation)
-		float Angle = pLocalChar->Core()->m_Angle * (pi / 180.0f) / 256.0f;
-		vec2 Direction = vec2(cosf(Angle), sinf(Angle));
-		vec2 ProjStartPos = pLocalChar->Core()->m_Pos + Direction * pLocalChar->GetProximityRadius() * 0.75f;
+		// Detect hammer fire by checking if attack tick changed and weapon is hammer
+		bool IsFiring = (Char.m_Weapon == WEAPON_HAMMER) && 
+		                (Char.m_AttackTick != PrevChar.m_AttackTick);
 		
-		CEntity *apEnts[MAX_CLIENTS];
-		int Num = GameClient()->m_PredictedWorld.FindEntities(ProjStartPos, pLocalChar->GetProximityRadius() * 0.5f, apEnts,
-			MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
-		
-		for(int i = 0; i < Num; ++i)
+		if(IsFiring && !m_WasFiring)
 		{
-			auto *pTarget = static_cast<CCharacter *>(apEnts[i]);
-			int TargetId = pTarget->GetCid();
-			
-			// Skip self and invalid targets
-			if(TargetId == GameClient()->m_Snap.m_LocalClientId || TargetId < 0)
-				continue;
-			
-			// Check if can collide (not in same team, etc.)
-			if(!pLocalChar->CanCollide(TargetId))
-				continue;
-			
-			// Steal skin from this target
-			StealSkin(TargetId);
+			// Hammer just hit something, find target
+			StealFromNearestPlayer();
+		}
+		
+		m_WasFiring = IsFiring;
+	}
+	
+	// Check hook attach
+	if(g_Config.m_TcHookStealSkin)
+	{
+		// Check if hook is attached to a player
+		int HookedPlayer = -1;
+		if(Char.m_HookState == HOOK_GRABBED)
+		{
+			// Find which player we're hooked to
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(i == GameClient()->m_Snap.m_LocalClientId)
+					continue;
+				
+				if(!GameClient()->m_Snap.m_aCharacters[i].m_Active)
+					continue;
+				
+				const CNetObj_Character &Target = GameClient()->m_Snap.m_aCharacters[i].m_Cur;
+				
+				// Check if hook is attached to this player
+				if(length(vec2(Char.m_HookX, Char.m_HookY) - vec2(Target.m_X, Target.m_Y)) < 28.0f)
+				{
+					HookedPlayer = i;
+					break;
+				}
+			}
+		}
+		
+		bool IsHooked = HookedPlayer >= 0;
+		
+		// Detect hook attach to new player
+		if(IsHooked && !m_WasHooked && HookedPlayer != m_LastHookedPlayer)
+		{
+			StealSkin(HookedPlayer);
+		}
+		
+		m_WasHooked = IsHooked;
+		if(IsHooked)
+			m_LastHookedPlayer = HookedPlayer;
+	}
+}
+
+void CSkinSteal::StealFromNearestPlayer()
+{
+	// Find nearest player in hammer range
+	const CNetObj_Character &Local = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Cur;
+	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
+		return;
+	
+	vec2 LocalPos = vec2(Local.m_X, Local.m_Y);
+	float Angle = Local.m_Angle * (pi / 180.0f) / 256.0f;
+	vec2 Direction = vec2(cosf(Angle), sinf(Angle));
+	vec2 HammerPos = LocalPos + Direction * 28.0f; // Hammer hit position
+	
+	int BestTarget = -1;
+	float BestDist = 1000.0f;
+	
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(i == GameClient()->m_Snap.m_LocalClientId)
+			continue;
+		
+		if(!GameClient()->m_Snap.m_aCharacters[i].m_Active)
+			continue;
+		
+		const CNetObj_Character &Target = GameClient()->m_Snap.m_aCharacters[i].m_Cur;
+		
+		vec2 TargetPos = vec2(Target.m_X, Target.m_Y);
+		float Dist = length(HammerPos - TargetPos);
+		
+		// Check if in hammer range (approximately 28 units)
+		if(Dist < 40.0f && Dist < BestDist)
+		{
+			BestDist = Dist;
+			BestTarget = i;
 		}
 	}
 	
-	m_LastAttackTick = CurrentAttackTick;
-}
-
-void CSkinSteal::CheckHookAttach()
-{
-	// Get local character
-	CCharacter *pLocalChar = GameClient()->m_PredictedWorld.GetCharacterById(GameClient()->m_Snap.m_LocalClientId);
-	if(!pLocalChar)
-		return;
-	
-	const CCharacterCore *pCore = pLocalChar->Core();
-	
-	// Check if hook is attached to a player
-	int HookedPlayer = pCore->HookedPlayer();
-	bool IsHooked = HookedPlayer >= 0;
-	
-	// Detect hook attach to new player
-	if(IsHooked && !m_WasHooked && HookedPlayer != m_LastHookedPlayer)
+	if(BestTarget >= 0)
 	{
-		// Hook just attached to a player
-		StealSkin(HookedPlayer);
+		StealSkin(BestTarget);
 	}
-	
-	m_WasHooked = IsHooked;
-	if(IsHooked)
-		m_LastHookedPlayer = HookedPlayer;
 }
 
 void CSkinSteal::StealSkin(int TargetId)
 {
-	// Check cooldown (reduced to 50ms for faster response)
+	// Check cooldown (100ms to prevent spam but allow quick response)
 	int64_t CurrentTime = time();
-	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 50)
+	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 100)
 		return;
 	
 	// Validate target
