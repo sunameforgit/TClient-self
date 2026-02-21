@@ -3,6 +3,8 @@
 
 #include <game/client/component.h>
 
+class CCharacter;
+
 class CSkinSteal : public CComponent
 {
 public:
@@ -17,8 +19,7 @@ private:
 	int m_LastFireTick;
 	
 	void StealSkin(int TargetId);
-	void StealFromHammerHit();
-	void StealFromNearestPlayer();
+	void StealFromPredictedHammerHit(CCharacter *pLocalChar);
 };
 
 #endif // GAME_CLIENT_COMPONENTS_TCLIENT_SKIN_STEAL_H

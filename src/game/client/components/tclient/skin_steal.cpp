@@ -24,15 +24,20 @@ void CSkinSteal::OnRender()
 	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
 		return;
 	
-	// Check hammer hit
+	// Check hammer hit - use predicted world for more accurate detection
 	if(g_Config.m_TcHammerStealSkin)
 	{
-		// Detect hammer fire by checking if weapon is hammer and attack tick is new
-		if(Char.m_Weapon == WEAPON_HAMMER && Char.m_AttackTick > m_LastFireTick)
+		// Get predicted character for hammer hit detection
+		CCharacter *pLocalChar = GameClient()->m_PredictedWorld.GetCharacterById(GameClient()->m_Snap.m_LocalClientId);
+		if(pLocalChar && pLocalChar->GetActiveWeapon() == WEAPON_HAMMER)
 		{
-			// Hammer just fired, find all targets in hammer range and steal from the one we're aiming at
-			StealFromHammerHit();
-			m_LastFireTick = Char.m_AttackTick;
+			int CurrentAttackTick = pLocalChar->GetAttackTick();
+			if(CurrentAttackTick > m_LastFireTick)
+			{
+				// Hammer just fired, use predicted world to find hit target
+				StealFromPredictedHammerHit(pLocalChar);
+				m_LastFireTick = CurrentAttackTick;
+			}
 		}
 	}
 	
@@ -77,108 +82,38 @@ void CSkinSteal::OnRender()
 	}
 }
 
-void CSkinSteal::StealFromHammerHit()
+void CSkinSteal::StealFromPredictedHammerHit(CCharacter *pLocalChar)
 {
-	// Get local character
-	const CNetObj_Character &Local = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Cur;
-	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
+	if(!pLocalChar)
 		return;
 	
-	// Calculate hammer hit position (same as game logic)
-	vec2 LocalPos = vec2(Local.m_X, Local.m_Y);
-	float Angle = Local.m_Angle * (pi / 180.0f) / 256.0f;
+	// Use the same logic as the game's FireWeapon function
+	float ProximityRadius = pLocalChar->GetProximityRadius();
+	float Angle = pLocalChar->Core()->m_Angle * (pi / 180.0f) / 256.0f;
 	vec2 Direction = vec2(cosf(Angle), sinf(Angle));
-	vec2 ProjStartPos = LocalPos + Direction * 28.0f * 0.75f;  // ProximityRadius * 0.75f
+	vec2 ProjStartPos = pLocalChar->Core()->m_Pos + Direction * (ProximityRadius * 0.75f);
 	
-	// Find all players in hammer range
-	int BestTarget = -1;
-	float BestScore = -1.0f;
+	CEntity *apEnts[MAX_CLIENTS];
+	int Num = GameClient()->m_PredictedWorld.FindEntities(ProjStartPos, ProximityRadius * 0.5f, apEnts,
+		MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 	
-	for(int i = 0; i < MAX_CLIENTS; i++)
+	// Find the best target (same logic as game - first valid hit)
+	for(int i = 0; i < Num; ++i)
 	{
-		if(i == GameClient()->m_Snap.m_LocalClientId)
+		auto *pTarget = static_cast<CCharacter *>(apEnts[i]);
+		int TargetId = pTarget->GetCid();
+		
+		// Skip self and invalid targets
+		if(TargetId == GameClient()->m_Snap.m_LocalClientId || TargetId < 0)
 			continue;
 		
-		if(!GameClient()->m_Snap.m_aCharacters[i].m_Active)
+		// Check if can collide
+		if(!pLocalChar->CanCollide(TargetId))
 			continue;
 		
-		const CNetObj_Character &Target = GameClient()->m_Snap.m_aCharacters[i].m_Cur;
-		vec2 TargetPos = vec2(Target.m_X, Target.m_Y);
-		
-		// Check if in hammer range (0.5f * ProximityRadius = 14.0f)
-		float Dist = length(TargetPos - ProjStartPos);
-		if(Dist > 14.0f)
-			continue;
-		
-		// Calculate score based on:
-		// 1. Distance (closer is better)
-		// 2. Alignment with attack direction (more in front is better)
-		vec2 ToTarget = normalize(TargetPos - LocalPos);
-		float Alignment = dot(Direction, ToTarget);  // 1.0 = directly in front, -1.0 = behind
-		
-		// Score: prefer targets in front (Alignment > 0) and closer
-		if(Alignment > 0.0f)
-		{
-			float Score = Alignment * (1.0f - Dist / 14.0f);  // Higher score = better target
-			if(Score > BestScore)
-			{
-				BestScore = Score;
-				BestTarget = i;
-			}
-		}
-	}
-	
-	// If found a valid target in front, steal from it
-	if(BestTarget >= 0 && BestScore > 0.0f)
-	{
-		StealSkin(BestTarget);
-	}
-	else
-	{
-		// Fallback: steal from nearest player in range (original behavior)
-		StealFromNearestPlayer();
-	}
-}
-
-void CSkinSteal::StealFromNearestPlayer()
-{
-	// Find nearest player in hammer range
-	const CNetObj_Character &Local = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Cur;
-	if(!GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Active)
-		return;
-	
-	vec2 LocalPos = vec2(Local.m_X, Local.m_Y);
-	float Angle = Local.m_Angle * (pi / 180.0f) / 256.0f;
-	vec2 Direction = vec2(cosf(Angle), sinf(Angle));
-	vec2 HammerPos = LocalPos + Direction * 28.0f; // Hammer hit position
-	
-	int BestTarget = -1;
-	float BestDist = 1000.0f;
-	
-	for(int i = 0; i < MAX_CLIENTS; i++)
-	{
-		if(i == GameClient()->m_Snap.m_LocalClientId)
-			continue;
-		
-		if(!GameClient()->m_Snap.m_aCharacters[i].m_Active)
-			continue;
-		
-		const CNetObj_Character &Target = GameClient()->m_Snap.m_aCharacters[i].m_Cur;
-		
-		vec2 TargetPos = vec2(Target.m_X, Target.m_Y);
-		float Dist = length(HammerPos - TargetPos);
-		
-		// Check if in hammer range (approximately 28 units)
-		if(Dist < 40.0f && Dist < BestDist)
-		{
-			BestDist = Dist;
-			BestTarget = i;
-		}
-	}
-	
-	if(BestTarget >= 0)
-	{
-		StealSkin(BestTarget);
+		// Found a valid target - steal skin
+		StealSkin(TargetId);
+		return;  // Only steal from first hit target (like game logic)
 	}
 }
 
@@ -193,8 +128,13 @@ void CSkinSteal::StealSkin(int TargetId)
 	if(TargetId < 0 || TargetId >= MAX_CLIENTS)
 		return;
 	
+	// Use snap data for skin info (more reliable than m_aClients)
+	if(!GameClient()->m_Snap.m_aCharacters[TargetId].m_Active)
+		return;
+	
+	// Get skin info from the snap data
 	const CGameClient::CClientData &Target = GameClient()->m_aClients[TargetId];
-	if(!Target.m_Active || TargetId == GameClient()->m_Snap.m_LocalClientId)
+	if(!Target.m_Active)
 		return;
 	
 	// Copy skin
