@@ -14,9 +14,7 @@ private:
 	int64_t m_LastStealTime;
 	int m_LastHookedPlayer;
 	bool m_WasHooked;
-	bool m_WasFiringHammer;
-	
-	static constexpr int64_t STEAL_COOLDOWN = 500; // ms
+	int m_LastAttackTick;
 	
 	void StealSkin(int TargetId);
 	void CheckHammerHit();

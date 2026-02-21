@@ -78,10 +78,10 @@ void CAutoEmote::SendEmote(int EmoteType)
 	const char *pCmd = GetEmoteCommand(EmoteType);
 	if(pCmd)
 	{
-		// Use emote command directly instead of chat for faster response
-		char aBuf[32];
-		str_format(aBuf, sizeof(aBuf), "emote %s 9999", pCmd);
-		Console()->ExecuteLine(aBuf, -1);
+		// Use chat command to send emote (like in emoticon.cpp)
+		char aBuf[64];
+		str_format(aBuf, sizeof(aBuf), "/emote %s %d", pCmd, g_Config.m_ClEyeDuration);
+		GameClient()->m_Chat.SendChatQueued(aBuf);
 	}
 }
 

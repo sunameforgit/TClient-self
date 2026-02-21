@@ -10,7 +10,7 @@ void CSkinSteal::OnInit()
 	m_LastStealTime = 0;
 	m_LastHookedPlayer = -1;
 	m_WasHooked = false;
-	m_WasFiringHammer = false;
+	m_LastAttackTick = -1;
 }
 
 void CSkinSteal::OnRender()
@@ -29,12 +29,13 @@ void CSkinSteal::CheckHammerHit()
 	if(!pLocalChar)
 		return;
 	
-	// Check if currently firing hammer using the character's input
-	bool IsFiringHammer = pLocalChar->GetActiveWeapon() == WEAPON_HAMMER && 
-	                      pLocalChar->Core()->m_Input.m_Fire;
+	// Check if hammer was just fired using attack tick
+	int CurrentAttackTick = pLocalChar->GetAttackTick();
+	bool HammerJustFired = pLocalChar->GetActiveWeapon() == WEAPON_HAMMER && 
+	                       CurrentAttackTick != m_LastAttackTick &&
+	                       CurrentAttackTick == GameClient()->m_PredictedWorld.GameTick();
 	
-	// Detect hammer fire start
-	if(IsFiringHammer && !m_WasFiringHammer)
+	if(HammerJustFired)
 	{
 		// Hammer was just fired, check for hits
 		// Get direction from angle (m_Angle is in units, 1 unit = 1/256 of a full rotation)
@@ -64,7 +65,7 @@ void CSkinSteal::CheckHammerHit()
 		}
 	}
 	
-	m_WasFiringHammer = IsFiringHammer;
+	m_LastAttackTick = CurrentAttackTick;
 }
 
 void CSkinSteal::CheckHookAttach()
@@ -94,9 +95,9 @@ void CSkinSteal::CheckHookAttach()
 
 void CSkinSteal::StealSkin(int TargetId)
 {
-	// Check cooldown (reduced to 100ms for faster response)
+	// Check cooldown (reduced to 50ms for faster response)
 	int64_t CurrentTime = time();
-	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 100)
+	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 50)
 		return;
 	
 	// Validate target
@@ -112,6 +113,9 @@ void CSkinSteal::StealSkin(int TargetId)
 	
 	// Use the existing skin profiles system
 	char aBuf[512];
+	
+	// Enable custom colors
+	Console()->ExecuteLine("player_use_custom_color 1", -1);
 	
 	// Set skin name
 	str_format(aBuf, sizeof(aBuf), "player_skin %s", Target.m_aSkinName);
