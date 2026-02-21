@@ -130,9 +130,9 @@ void CSkinSteal::StealFromPredictedHammerHit(CCharacter *pLocalChar)
 
 void CSkinSteal::StealSkin(int TargetId)
 {
-	// Check cooldown (100ms to prevent spam but allow quick response)
+	// Check cooldown (50ms for faster response)
 	int64_t CurrentTime = time();
-	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 100)
+	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 50)
 		return;
 	
 	// Validate target
@@ -157,9 +157,19 @@ void CSkinSteal::StealSkin(int TargetId)
 	// Check if target uses custom colors
 	bool UseCustomColor = Target.m_UseCustomColor;
 	
-	// Set custom color flag (0 or 1 based on target)
-	str_format(aBuf, sizeof(aBuf), "player_use_custom_color %d", UseCustomColor ? 1 : 0);
-	Console()->ExecuteLine(aBuf, -1);
+	// For original skin (no custom color), reset colors first to avoid seeing previous colors
+	if(!UseCustomColor)
+	{
+		// Reset to default colors first
+		Console()->ExecuteLine("player_use_custom_color 0", -1);
+		Console()->ExecuteLine("player_color_body 0", -1);
+		Console()->ExecuteLine("player_color_feet 0", -1);
+	}
+	else
+	{
+		// Enable custom colors
+		Console()->ExecuteLine("player_use_custom_color 1", -1);
+	}
 	
 	// Set skin name
 	str_format(aBuf, sizeof(aBuf), "player_skin %s", Target.m_aSkinName);
