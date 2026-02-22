@@ -54,7 +54,62 @@ private:
 
 ### 锤子窃取检测
 
-**原理**: 使用 snap 数据的 `m_AttackTick` 变化检测锤子攻击
+采用**双重检测机制**，结合事件驱动和预测数据，提高检测可靠性：
+
+#### 方法1: 预测事件驱动（主要）
+
+监听预测世界中的锤子命中事件，这是最准确的检测方式：
+
+```cpp
+void CheckPredictedHammerEvents()
+{
+    CGameWorld *pPredictedWorld = &GameClient()->m_PredictedWorld;
+    
+    // 遍历预测事件
+    for(const auto &Event : pPredictedWorld->m_PredictedEvents)
+    {
+        // 只处理锤子命中事件
+        if(Event.m_EventId != NETEVENTTYPE_HAMMERHIT)
+            continue;
+        
+        if(Event.m_Id != LocalId)
+            continue;
+        
+        // 跳过已处理的事件
+        if(Event.m_Tick <= m_LastProcessedEventTick)
+            continue;
+        
+        // 在命中位置附近查找目标
+        vec2 HammerHitPos = Event.m_Pos;
+        // ... 查找并窃取皮肤
+    }
+}
+```
+
+#### 方法2: 预测世界检测（备用）
+
+当事件检测失效时，使用预测世界的角色位置进行几何检测：
+
+```cpp
+void StealFromHammerHitPredicted()
+{
+    CGameWorld *pPredictedWorld = &GameClient()->m_PredictedWorld;
+    CCharacter *pLocalChar = pPredictedWorld->GetCharacterById(LocalId);
+    
+    // 从预测世界获取位置和角度
+    vec2 LocalPos = pLocalChar->Core()->m_Pos;
+    float Angle = pLocalChar->Core()->m_Angle / 256.0f * (pi / 180.0f);
+    vec2 Direction = vec2(cosf(Angle), sinf(Angle));
+    vec2 HammerPos = LocalPos + Direction * 28.0f;
+    
+    // 在预测世界中查找目标（范围稍大：50.0f）
+    // ... 查找并窃取皮肤
+}
+```
+
+#### 方法3: Snap 数据检测（后备）
+
+当预测数据不可用时，使用服务器同步的 snap 数据：
 
 ```cpp
 // 获取当前和上一帧的角色数据
@@ -67,40 +122,19 @@ bool IsFiringHammer = (Char.m_Weapon == WEAPON_HAMMER) &&
 
 if(IsFiringHammer && !m_WasFiringHammer)
 {
-    // 锤子刚攻击，查找命中目标
-    StealFromHammerHit();
-}
-
-m_WasFiringHammer = IsFiringHammer;
-```
-
-**目标查找**: 在锤子攻击范围内查找最合适的玩家
-
-```cpp
-// 计算锤子攻击位置
-vec2 LocalPos = vec2(Local.m_X, Local.m_Y);
-float Angle = Local.m_Angle * (pi / 180.0f) / 256.0f;
-vec2 Direction = vec2(cosf(Angle), sinf(Angle));
-vec2 HammerPos = LocalPos + Direction * 28.0f;
-
-// 在范围内查找玩家，选择最在前方的目标
-for(int i = 0; i < MAX_CLIENTS; i++)
-{
-    float Dist = length(HammerPos - TargetPos);
-    if(Dist > 40.0f) continue;  // 超出范围
-    
-    // 计算方向对齐度
-    vec2 ToTarget = normalize(TargetPos - LocalPos);
-    float Alignment = dot(Direction, ToTarget);
-    
-    // 选择在前方且距离最近的目标
-    if(Alignment > 0.0f)
-    {
-        float Score = Alignment * (1.0f - Dist / 40.0f);
-        // 选择得分最高的目标
-    }
+    StealFromHammerHitPredicted();  // 优先使用预测世界
 }
 ```
+
+**三种检测方式的关系**:
+1. 每帧首先检查预测事件（最准确）
+2. 当检测到 `m_AttackTick` 变化时，使用预测世界查找目标
+3. 如果预测世界不可用，回退到 snap 数据
+
+**为什么这样更稳定**:
+- **事件驱动**: 直接监听游戏内建的锤子命中事件，不依赖 tick 比较
+- **预测数据**: 使用客户端预测的角色位置，比服务器 snap 数据更实时
+- **多重保障**: 三种方法互为备份，提高检测成功率
 
 ### 钩子窃取检测
 
@@ -399,11 +433,13 @@ Console()->ExecuteLine(aBuf, -1);
 ## 最后更新
 
 - **日期**: 2025-01-21
-- **版本**: TClient Custom Features v1.2
+- **版本**: TClient Custom Features v1.3
 - **更新内容**:
   - 修复 `/stealskin` 聊天命令（使用 `m_SkinSteal` 直接调用）
-  - 优化锤子检测（使用 `m_AttackTick` 变化，更可靠）
-  - 移除预测世界依赖，只使用 snap 数据
+  - **重构锤子检测系统**（三重检测机制）：
+    - 新增预测事件驱动检测（`NETEVENTTYPE_HAMMERHIT`）
+    - 新增预测世界角色位置检测
+    - 保留 snap 数据作为后备检测
   - 减少皮肤窃取冷却时间至 10ms（几乎即时响应）
   - 优化原皮窃取逻辑（先重置颜色）
   - 表情持续时间改为间隔的一半

@@ -1,6 +1,7 @@
 #include "skin_steal.h"
 
 #include <engine/shared/config.h>
+#include <generated/protocol.h>
 #include <game/client/gameclient.h>
 #include <game/client/prediction/entities/character.h>
 #include <game/client/prediction/gameworld.h>
@@ -12,6 +13,8 @@ void CSkinSteal::OnInit()
 	m_WasHooked = false;
 	m_WasFiringHammer = false;
 	m_LastStolenFrom = -1;
+	m_LastPredictedHammerTick = -1;
+	m_LastProcessedEventTick = -1;
 }
 
 void CSkinSteal::OnRender()
@@ -71,14 +74,17 @@ void CSkinSteal::OnRender()
 	// Check hammer hit (skip if hook just triggered to avoid double steal)
 	if(g_Config.m_TcHammerStealSkin && !HookTriggered)
 	{
-		// Use snap data to detect hammer fire (check attack tick change)
+		// Method 1: Use predicted hammer events (more reliable, event-driven)
+		CheckPredictedHammerEvents();
+		
+		// Method 2: Use snap data as fallback (check attack tick change)
 		const CNetObj_Character &PrevChar = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Prev;
 		bool IsFiringHammer = (Char.m_Weapon == WEAPON_HAMMER) && (Char.m_AttackTick != PrevChar.m_AttackTick);
 		
 		if(IsFiringHammer && !m_WasFiringHammer)
 		{
-			// Hammer just hit something
-			StealFromHammerHit();
+			// Hammer just hit something - use predicted world for more accurate detection
+			StealFromHammerHitPredicted();
 		}
 		
 		m_WasFiringHammer = IsFiringHammer;
@@ -134,6 +140,138 @@ void CSkinSteal::StealFromHammerHit()
 		if(Alignment > 0.0f)
 		{
 			float Score = Alignment * (1.0f - Dist / 40.0f);
+			if(Score > BestScore)
+			{
+				BestScore = Score;
+				BestTarget = i;
+			}
+		}
+	}
+	
+	// If found a valid target in front, steal from it
+	if(BestTarget >= 0 && BestScore > 0.0f)
+	{
+		StealSkin(BestTarget);
+	}
+}
+
+void CSkinSteal::CheckPredictedHammerEvents()
+{
+	// Check for predicted hammer hit events in the predicted world
+	CGameWorld *pPredictedWorld = &GameClient()->m_PredictedWorld;
+	if(!pPredictedWorld)
+		return;
+	
+	int LocalId = GameClient()->m_Snap.m_LocalClientId;
+	
+	// Iterate through predicted events
+	for(const auto &Event : pPredictedWorld->m_PredictedEvents)
+	{
+		// Only process hammer hit events for local player
+		if(Event.m_EventId != NETEVENTTYPE_HAMMERHIT)
+			continue;
+		
+		if(Event.m_Id != LocalId)
+			continue;
+		
+		// Skip already processed events
+		if(Event.m_Tick <= m_LastProcessedEventTick)
+			continue;
+		
+		// Update last processed tick
+		if(Event.m_Tick > m_LastProcessedEventTick)
+			m_LastProcessedEventTick = Event.m_Tick;
+		
+		// Find target at hammer hit position using predicted world
+		vec2 HammerHitPos = Event.m_Pos;
+		int BestTarget = -1;
+		float BestDist = 1000.0f;
+		
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(i == LocalId)
+				continue;
+			
+			CCharacter *pTarget = pPredictedWorld->GetCharacterById(i);
+			if(!pTarget)
+				continue;
+			
+			float Dist = length(pTarget->Core()->m_Pos - HammerHitPos);
+			if(Dist < BestDist && Dist < 60.0f) // Within hammer hit range
+			{
+				BestDist = Dist;
+				BestTarget = i;
+			}
+		}
+		
+		if(BestTarget >= 0)
+		{
+			StealSkin(BestTarget);
+		}
+	}
+}
+
+void CSkinSteal::StealFromHammerHitPredicted()
+{
+	// Use predicted world for more accurate hammer hit detection
+	CGameWorld *pPredictedWorld = &GameClient()->m_PredictedWorld;
+	if(!pPredictedWorld)
+	{
+		// Fallback to snap data if predicted world not available
+		StealFromHammerHit();
+		return;
+	}
+	
+	int LocalId = GameClient()->m_Snap.m_LocalClientId;
+	CCharacter *pLocalChar = pPredictedWorld->GetCharacterById(LocalId);
+	if(!pLocalChar)
+	{
+		// Fallback to snap data
+		StealFromHammerHit();
+		return;
+	}
+	
+	// Get local character data from predicted world
+	vec2 LocalPos = pLocalChar->Core()->m_Pos;
+	float Angle = pLocalChar->Core()->m_Angle / 256.0f * (pi / 180.0f);
+	vec2 Direction = vec2(cosf(Angle), sinf(Angle));
+	vec2 HammerPos = LocalPos + Direction * 28.0f;
+	
+	// Find all players in hammer range using predicted world
+	int BestTarget = -1;
+	float BestScore = -1.0f;
+	
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(i == LocalId)
+			continue;
+		
+		CCharacter *pTarget = pPredictedWorld->GetCharacterById(i);
+		if(!pTarget)
+			continue;
+		
+		vec2 TargetPos = pTarget->Core()->m_Pos;
+		float Dist = length(HammerPos - TargetPos);
+		
+		// Check if in hammer range
+		if(Dist > 50.0f) // Slightly larger range for predicted world
+			continue;
+		
+		// Skip if we just stole from this player via hook
+		if(i == m_LastStolenFrom)
+		{
+			m_LastStolenFrom = -1;
+			continue;
+		}
+		
+		// Calculate score based on distance and direction
+		vec2 ToTarget = normalize(TargetPos - LocalPos);
+		float Alignment = dot(Direction, ToTarget);
+		
+		// Prefer targets in front (Alignment > 0) and closer
+		if(Alignment > 0.0f)
+		{
+			float Score = Alignment * (1.0f - Dist / 50.0f);
 			if(Score > BestScore)
 			{
 				BestScore = Score;

@@ -22,7 +22,13 @@ private:
 	bool m_WasFiringHammer;
 	int m_LastStolenFrom;
 	
+	// For predicted hammer hit detection
+	int m_LastPredictedHammerTick;
+	int m_LastProcessedEventTick;
+	
 	void StealFromHammerHit();
+	void StealFromHammerHitPredicted();
+	void CheckPredictedHammerEvents();
 };
 
 #endif // GAME_CLIENT_COMPONENTS_TCLIENT_SKIN_STEAL_H
