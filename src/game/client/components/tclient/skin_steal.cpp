@@ -16,6 +16,7 @@ void CSkinSteal::OnInit()
 	m_LastProcessedEventTick = -1;
 	m_LastHammerHitTick = -1;
 	m_HammerStealTriggeredThisTick = false;
+	m_LastStealTargetId = -1;
 }
 
 void CSkinSteal::OnRender()
@@ -322,13 +323,17 @@ void CSkinSteal::StealFromHammerHitPredicted()
 
 void CSkinSteal::StealSkin(int TargetId)
 {
-	// Check cooldown (10ms for very fast response)
+	// Check cooldown (50ms to prevent duplicate triggers)
 	int64_t CurrentTime = time();
-	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 10)
+	if((CurrentTime - m_LastStealTime) * 1000 / time_freq() < 50)
 		return;
 	
 	// Validate target
 	if(TargetId < 0 || TargetId >= MAX_CLIENTS)
+		return;
+	
+	// Prevent stealing from the same target twice in quick succession
+	if(TargetId == m_LastStealTargetId && (CurrentTime - m_LastStealTime) * 1000 / time_freq() < 500)
 		return;
 	
 	// Use snap data for skin info
@@ -342,6 +347,7 @@ void CSkinSteal::StealSkin(int TargetId)
 	
 	// Copy skin
 	m_LastStealTime = CurrentTime;
+	m_LastStealTargetId = TargetId;
 	
 	// Use the existing skin profiles system
 	char aBuf[512];

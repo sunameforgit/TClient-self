@@ -26,6 +26,7 @@ private:
 	int m_LastProcessedEventTick;
 	int m_LastHammerHitTick;
 	bool m_HammerStealTriggeredThisTick;
+	int m_LastStealTargetId;  // Track last stolen target to prevent duplicates
 	
 	void StealFromHammerHit();
 	void StealFromHammerHitPredicted();
