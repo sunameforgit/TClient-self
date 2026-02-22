@@ -23,8 +23,9 @@ private:
 	int m_LastStolenFrom;
 	
 	// For predicted hammer hit detection
-	int m_LastPredictedHammerTick;
 	int m_LastProcessedEventTick;
+	int m_LastHammerHitTick;
+	bool m_HammerStealTriggeredThisTick;
 	
 	void StealFromHammerHit();
 	void StealFromHammerHitPredicted();

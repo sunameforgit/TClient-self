@@ -13,8 +13,9 @@ void CSkinSteal::OnInit()
 	m_WasHooked = false;
 	m_WasFiringHammer = false;
 	m_LastStolenFrom = -1;
-	m_LastPredictedHammerTick = -1;
 	m_LastProcessedEventTick = -1;
+	m_LastHammerHitTick = -1;
+	m_HammerStealTriggeredThisTick = false;
 }
 
 void CSkinSteal::OnRender()
@@ -74,20 +75,30 @@ void CSkinSteal::OnRender()
 	// Check hammer hit (skip if hook just triggered to avoid double steal)
 	if(g_Config.m_TcHammerStealSkin && !HookTriggered)
 	{
+		// Reset tick-based flag at the start of each frame
+		m_HammerStealTriggeredThisTick = false;
+		
+		// Get current game tick
+		int CurrentTick = GameClient()->m_PredictedWorld.GameTick();
+		
 		// Method 1: Use predicted hammer events (more reliable, event-driven)
 		CheckPredictedHammerEvents();
 		
 		// Method 2: Use snap data as fallback (check attack tick change)
-		const CNetObj_Character &PrevChar = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Prev;
-		bool IsFiringHammer = (Char.m_Weapon == WEAPON_HAMMER) && (Char.m_AttackTick != PrevChar.m_AttackTick);
-		
-		if(IsFiringHammer && !m_WasFiringHammer)
+		// Only if event-based detection didn't trigger this tick
+		if(!m_HammerStealTriggeredThisTick)
 		{
-			// Hammer just hit something - use predicted world for more accurate detection
-			StealFromHammerHitPredicted();
+			const CNetObj_Character &PrevChar = GameClient()->m_Snap.m_aCharacters[GameClient()->m_Snap.m_LocalClientId].m_Prev;
+			bool IsFiringHammer = (Char.m_Weapon == WEAPON_HAMMER) && (Char.m_AttackTick != PrevChar.m_AttackTick);
+			
+			if(IsFiringHammer && !m_WasFiringHammer)
+			{
+				// Hammer just hit something - use predicted world for more accurate detection
+				StealFromHammerHitPredicted();
+			}
+			
+			m_WasFiringHammer = IsFiringHammer;
 		}
-		
-		m_WasFiringHammer = IsFiringHammer;
 	}
 }
 
@@ -163,6 +174,11 @@ void CSkinSteal::CheckPredictedHammerEvents()
 		return;
 	
 	int LocalId = GameClient()->m_Snap.m_LocalClientId;
+	int CurrentTick = pPredictedWorld->GameTick();
+	
+	// If we already processed an event for this tick, skip
+	if(m_HammerStealTriggeredThisTick)
+		return;
 	
 	// Iterate through predicted events
 	for(const auto &Event : pPredictedWorld->m_PredictedEvents)
@@ -181,6 +197,10 @@ void CSkinSteal::CheckPredictedHammerEvents()
 		// Update last processed tick
 		if(Event.m_Tick > m_LastProcessedEventTick)
 			m_LastProcessedEventTick = Event.m_Tick;
+		
+		// Mark that we've triggered for this tick
+		m_HammerStealTriggeredThisTick = true;
+		m_LastHammerHitTick = CurrentTick;
 		
 		// Find target at hammer hit position using predicted world
 		vec2 HammerHitPos = Event.m_Pos;
@@ -208,11 +228,18 @@ void CSkinSteal::CheckPredictedHammerEvents()
 		{
 			StealSkin(BestTarget);
 		}
+		
+		// Only process one event per tick to avoid duplicates
+		break;
 	}
 }
 
 void CSkinSteal::StealFromHammerHitPredicted()
 {
+	// Skip if we already triggered this tick
+	if(m_HammerStealTriggeredThisTick)
+		return;
+	
 	// Use predicted world for more accurate hammer hit detection
 	CGameWorld *pPredictedWorld = &GameClient()->m_PredictedWorld;
 	if(!pPredictedWorld)
@@ -223,6 +250,8 @@ void CSkinSteal::StealFromHammerHitPredicted()
 	}
 	
 	int LocalId = GameClient()->m_Snap.m_LocalClientId;
+	int CurrentTick = pPredictedWorld->GameTick();
+	
 	CCharacter *pLocalChar = pPredictedWorld->GetCharacterById(LocalId);
 	if(!pLocalChar)
 	{
@@ -230,6 +259,10 @@ void CSkinSteal::StealFromHammerHitPredicted()
 		StealFromHammerHit();
 		return;
 	}
+	
+	// Mark that we've triggered for this tick
+	m_HammerStealTriggeredThisTick = true;
+	m_LastHammerHitTick = CurrentTick;
 	
 	// Get local character data from predicted world
 	vec2 LocalPos = pLocalChar->Core()->m_Pos;
