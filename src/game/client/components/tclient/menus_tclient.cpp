@@ -568,34 +568,34 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
 	s_SectionBoxes.push_back(Column);
 	Column.HSplitTop(HeadlineHeight, &Label, &Column);
-	Ui()->DoLabel(&Label, TCLocalize("Custom Features"), HeadlineFontSize, TEXTALIGN_ML);
+	Ui()->DoLabel(&Label, TCLocalize("自定义功能"), HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
 	// Skin Steal
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHammerStealSkin, TCLocalize("Skin Steal (Hammer)"), &g_Config.m_TcHammerStealSkin, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHookStealSkin, TCLocalize("Skin Steal (Hook)"), &g_Config.m_TcHookStealSkin, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHammerStealSkin, TCLocalize("窃取皮肤 (锤子)"), &g_Config.m_TcHammerStealSkin, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcHookStealSkin, TCLocalize("窃取皮肤 (钩子)"), &g_Config.m_TcHookStealSkin, &Column, LineSize);
 
 	// Auto Emote
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("Auto Emote"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoEmoteToggle, TCLocalize("自动表情"), &g_Config.m_TcAutoEmoteToggle, &Column, LineSize);
 	if(g_Config.m_TcAutoEmoteToggle)
 	{
-		static std::vector<const char *> s_EmoteDropDownNames = {TCLocalize("Happy"), TCLocalize("Pain"), TCLocalize("Surprise"), TCLocalize("Angry"), TCLocalize("Blink"), TCLocalize("Random")};
+		static std::vector<const char *> s_EmoteDropDownNames = {TCLocalize("开心"), TCLocalize("痛苦"), TCLocalize("惊讶"), TCLocalize("生气"), TCLocalize("眨眼"), TCLocalize("随机")};
 		static CUi::SDropDownState s_EmoteDropDownState;
 		static CScrollRegion s_EmoteDropDownScrollRegion;
 		s_EmoteDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_EmoteDropDownScrollRegion;
 		CUIRect EmoteDropDownRect;
 		Column.HSplitTop(LineSize, &EmoteDropDownRect, &Column);
 		EmoteDropDownRect.VSplitLeft(120.0f, &Label, &EmoteDropDownRect);
-		Ui()->DoLabel(&Label, TCLocalize("Emote Type: "), FontSize, TEXTALIGN_ML);
+		Ui()->DoLabel(&Label, TCLocalize("表情类型: "), FontSize, TEXTALIGN_ML);
 		g_Config.m_TcAutoEmoteType = Ui()->DoDropDown(&EmoteDropDownRect, g_Config.m_TcAutoEmoteType, s_EmoteDropDownNames.data(), s_EmoteDropDownNames.size(), s_EmoteDropDownState);
 		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 
 		Column.HSplitTop(LineSize, &Button, &Column);
-		Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("Interval"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
+		Ui()->DoScrollbarOption(&g_Config.m_TcAutoEmoteInterval, &g_Config.m_TcAutoEmoteInterval, &Button, TCLocalize("切换间隔"), 100, 5000, &CUi::ms_LinearScrollbarScale, 0, "ms");
 	}
 
 	// Friend Online Notification
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFriendOnlineNotify, TCLocalize("Friend online notification"), &g_Config.m_TcFriendOnlineNotify, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFriendOnlineNotify, TCLocalize("好友上线通知"), &g_Config.m_TcFriendOnlineNotify, &Column, LineSize);
 
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
