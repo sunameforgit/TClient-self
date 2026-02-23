@@ -7,6 +7,8 @@
 
 #include <game/client/component.h>
 
+#include <deque>
+
 class CEffects : public CComponent
 {
 private:
@@ -20,6 +22,20 @@ private:
 	int64_t m_LastUpdate100hz = 0;
 
 	int64_t m_SkidSoundTimer = 0;
+
+	// Deduplication system for effects
+	struct CEffectRecord
+	{
+		int m_Type;
+		vec2 m_Pos;
+		int64_t m_Time;
+	};
+	std::deque<CEffectRecord> m_RecentEffects;
+	static constexpr int64_t EFFECT_DEDUP_TIME = 100 * 1000; // 100ms in microseconds
+	static constexpr size_t MAX_RECORDS = 32;
+
+	bool IsEffectRecentlyPlayed(int Type, vec2 Pos);
+	void RecordEffect(int Type, vec2 Pos);
 
 public:
 	CEffects();

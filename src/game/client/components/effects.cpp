@@ -21,6 +21,48 @@ CEffects::CEffects()
 	m_Add100hz = false;
 }
 
+bool CEffects::IsEffectRecentlyPlayed(int Type, vec2 Pos)
+{
+	const int64_t Now = time();
+	const float DISTANCE_THRESHOLD = 16.0f; // Same position within 16 units
+
+	for(const auto &Record : m_RecentEffects)
+	{
+		if(Record.m_Type == Type &&
+		   (Now - Record.m_Time) < EFFECT_DEDUP_TIME &&
+		   length(Record.m_Pos - Pos) < DISTANCE_THRESHOLD)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void CEffects::RecordEffect(int Type, vec2 Pos)
+{
+	const int64_t Now = time();
+
+	// Remove old records
+	while(!m_RecentEffects.empty() &&
+	      (Now - m_RecentEffects.front().m_Time) > EFFECT_DEDUP_TIME)
+	{
+		m_RecentEffects.pop_front();
+	}
+
+	// Add new record
+	CEffectRecord Record;
+	Record.m_Type = Type;
+	Record.m_Pos = Pos;
+	Record.m_Time = Now;
+	m_RecentEffects.push_back(Record);
+
+	// Limit records size
+	while(m_RecentEffects.size() > MAX_RECORDS)
+	{
+		m_RecentEffects.pop_front();
+	}
+}
+
 void CEffects::AirJump(vec2 Pos, float Alpha, float Volume)
 {
 	CParticle p;
@@ -325,6 +367,11 @@ void CEffects::Confetti(vec2 Pos, float Alpha)
 
 void CEffects::Explosion(vec2 Pos, float Alpha)
 {
+	// Check if this effect was recently played
+	if(IsEffectRecentlyPlayed(0, Pos))
+		return;
+	RecordEffect(0, Pos);
+
 	// add to flow
 	for(int y = -8; y <= 8; y++)
 		for(int x = -8; x <= 8; x++)
@@ -391,6 +438,11 @@ void CEffects::Explosion(vec2 Pos, float Alpha)
 
 void CEffects::HammerHit(vec2 Pos, float Alpha, float Volume)
 {
+	// Check if this effect was recently played
+	if(IsEffectRecentlyPlayed(1, Pos))
+		return;
+	RecordEffect(1, Pos);
+
 	// add the explosion
 	CParticle p;
 	p.SetDefault();
