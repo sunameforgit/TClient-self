@@ -6,7 +6,8 @@
 
 1. [皮肤窃取 (Skin Steal)](#皮肤窃取-skin-steal)
 2. [自动表情 (Auto Emote)](#自动表情-auto-emote)
-3. [快速输入 (Fast Input)](#快速输入-fast-input)
+3. [好友上线通知 (Friend Online Notification)](#好友上线通知-friend-online-notification)
+4. [快速输入 (Fast Input)](#快速输入-fast-input)
 
 ---
 
@@ -48,7 +49,15 @@ private:
     bool m_WasFiringHammer;      // 是否正在锤击（用于检测锤击开始）
     int m_LastStolenFrom;        // 上次窃取的玩家ID（防止重复）
     
+    // For predicted hammer hit detection
+    int m_LastProcessedEventTick;   // 上次处理的事件tick
+    int m_LastHammerHitTick;        // 上次锤击tick
+    bool m_HammerStealTriggeredThisTick;  // 当前tick是否已触发
+    int m_LastStealTargetId;        // 上次窃取的目标ID（防止重复）
+    
     void StealFromHammerHit();
+    void StealFromHammerHitPredicted();
+    void CheckPredictedHammerEvents();
 };
 ```
 
@@ -180,9 +189,11 @@ if(!UseCustomColor)
 
 ### 防Spam机制
 
-- **冷却时间**: 10ms（极短延迟，几乎即时响应）
+- **冷却时间**: 50ms（防止重复触发）
 - **实现**: 使用 `time()` 比较上次窃取时间
-- **防重复**: 使用 `m_LastStolenFrom` 防止钩子和锤子同时触发时重复窃取
+- **防重复**: 
+  - 使用 `m_LastStolenFrom` 防止钩子和锤子同时触发时重复窃取
+  - 使用 `m_LastStealTargetId` 防止短时间内重复窃取同一目标（500ms内）
 
 ### 聊天命令
 
@@ -311,6 +322,83 @@ GameClient()->m_Chat.SendChatQueued(aBuf);
 
 ---
 
+## 好友上线通知 (Friend Online Notification)
+
+### 功能描述
+
+检测好友上线并在聊天框显示通知消息。
+
+### 配置文件
+
+- **头文件**: `src/game/client/components/tclient/friend_notify.h`
+- **实现文件**: `src/game/client/components/tclient/friend_notify.cpp`
+
+### 配置变量
+
+```cpp
+MACRO_CONFIG_INT(TcFriendOnlineNotify, tc_friend_online_notify, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Notify when friend comes online")
+```
+
+### 核心类
+
+```cpp
+class CFriendNotify : public CComponent
+{
+private:
+    int64_t m_LastCheckTime;
+    std::unordered_set<std::string> m_LastOnlineFriends;
+    
+    void CheckFriendsOnline();
+    void NotifyFriendOnline(const char *pName);
+};
+```
+
+### 检测原理
+
+遍历服务器浏览器中的所有服务器，检查每个服务器上的玩家是否为好友：
+
+```cpp
+// 检查所有服务器
+for(int i = 0; i < ServerBrowser()->NumServers(); i++)
+{
+    const CServerInfo *pInfo = ServerBrowser()->Get(i);
+    if(!pInfo || pInfo->m_FriendState == IFriends::FRIEND_NO)
+        continue;
+
+    // 检查服务器上的每个玩家
+    for(int j = 0; j < pInfo->m_NumClients; j++)
+    {
+        const CServerInfo::CClient &Client = pInfo->m_aClients[j];
+        if(Client.m_FriendState != IFriends::FRIEND_NO)
+        {
+            // 这是好友，加入在线列表
+            CurrentOnlineFriends.insert(std::string(Client.m_aName));
+        }
+    }
+}
+```
+
+### 通知方式
+
+在聊天框显示绿色系统消息：
+
+```cpp
+void CFriendNotify::NotifyFriendOnline(const char *pName)
+{
+    char aBuf[256];
+    str_format(aBuf, sizeof(aBuf), "[TClient] Friend '%s' is now online!", pName);
+    GameClient()->m_Chat.AddLine(-2, 0, aBuf); // -2 = CLIENT_MSG (绿色)
+}
+```
+
+### 检测范围
+
+- **所有服务器**: 包括服务器浏览器中显示的所有服务器
+- **在线好友面板**: 右边好友列表中的好友
+- **其他服务器上的好友**: 即使不在当前查看的服务器上
+
+---
+
 ## 快速输入 (Fast Input)
 
 ### 功能描述
@@ -423,6 +511,7 @@ Console()->ExecuteLine(aBuf, -1);
 |------|--------|----------|
 | 皮肤窃取 | `src/game/client/components/tclient/skin_steal.h` | `src/game/client/components/tclient/skin_steal.cpp` |
 | 自动表情 | `src/game/client/components/tclient/auto_emote.h` | `src/game/client/components/tclient/auto_emote.cpp` |
+| 好友上线通知 | `src/game/client/components/tclient/friend_notify.h` | `src/game/client/components/tclient/friend_notify.cpp` |
 | 配置变量 | - | `src/engine/shared/config_variables_tclient.h` |
 | UI设置 | - | `src/game/client/components/tclient/menus_tclient.cpp` |
 | 快速输入 | - | `src/game/client/gameclient.cpp` |
@@ -433,14 +522,19 @@ Console()->ExecuteLine(aBuf, -1);
 ## 最后更新
 
 - **日期**: 2025-01-21
-- **版本**: TClient Custom Features v1.3
+- **版本**: TClient Custom Features v1.4
 - **更新内容**:
   - 修复 `/stealskin` 聊天命令（使用 `m_SkinSteal` 直接调用）
   - **重构锤子检测系统**（三重检测机制）：
     - 新增预测事件驱动检测（`NETEVENTTYPE_HAMMERHIT`）
     - 新增预测世界角色位置检测
     - 保留 snap 数据作为后备检测
-  - 减少皮肤窃取冷却时间至 10ms（几乎即时响应）
+  - 优化皮肤窃取冷却机制：
+    - 冷却时间从 10ms 调整为 50ms
+    - 添加 `m_LastStealTargetId` 防止短时间内重复窃取同一目标
   - 优化原皮窃取逻辑（先重置颜色）
   - 表情持续时间改为间隔的一半
   - 添加防重复窃取机制
+  - 添加好友上线通知功能文档
+  - UI 文字汉化（自定义功能区块）
+  - 调整自定义功能区块位置到右边列
