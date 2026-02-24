@@ -41,11 +41,6 @@ class CTClient : public CComponent
 
 	bool ServerCommandExists(const char *pCommand);
 
-	// Auto greet friends
-	bool m_AutoGreetDone = false;
-	int64_t m_JoinTime = 0;
-	void AutoGreetFriends();
-
 public:
 	CTClient();
 	int Sizeof() const override { return sizeof(*this); }

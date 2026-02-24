@@ -657,34 +657,11 @@ void CTClient::OnStateChange(int OldState, int NewState)
 	SetForcedAspect();
 	for(auto &AirRescuePositions : m_aAirRescuePositions)
 		AirRescuePositions = {};
-
-	// Reset auto greet when connecting
-	if(NewState == IClient::STATE_ONLINE)
-	{
-		m_AutoGreetDone = false;
-		m_JoinTime = time();
-	}
 }
 
 void CTClient::OnNewSnapshot()
 {
 	SetForcedAspect();
-
-	// Auto greet friends after joining (check every 60 frames ~ 1 second at 60fps)
-	static int GreetCheckCounter = 0;
-	if(!m_AutoGreetDone && g_Config.m_TcAutoGreetFriends && m_JoinTime > 0)
-	{
-		if(++GreetCheckCounter >= 60)
-		{
-			GreetCheckCounter = 0;
-			// Wait 3 seconds after joining to ensure we have player data
-			if(time() - m_JoinTime > time_freq() * 3)
-			{
-				AutoGreetFriends();
-				m_AutoGreetDone = true;
-			}
-		}
-	}
 
 	// Update volleyball
 	bool IsVolleyBall = false;
@@ -889,44 +866,4 @@ void CTClient::RenderCtfFlag(vec2 Pos, float Alpha)
 	Graphics()->QuadsSetRotation(0.0f);
 	Graphics()->SetColor(1.0f, 1.0f, 1.0f, Alpha);
 	Graphics()->RenderQuadContainerAsSprite(GameClient()->m_Items.m_ItemsQuadContainerIndex, QuadOffset, Pos.x, Pos.y - Size * 0.75f);
-}
-
-void CTClient::AutoGreetFriends()
-{
-	if(!g_Config.m_TcAutoGreetFriends || g_Config.m_TcAutoGreetMessage[0] == '\0')
-		return;
-
-	int LocalId = GameClient()->m_Snap.m_LocalClientId;
-	if(LocalId < 0)
-		return;
-
-	// Find friends on current server
-	std::vector<int> vFriendIds;
-	for(int i = 0; i < MAX_CLIENTS; i++)
-	{
-		if(i == LocalId)
-			continue;
-
-		const CGameClient::CClientData &Client = GameClient()->m_aClients[i];
-		if(!Client.m_Active)
-			continue;
-
-		// Check if this player is a friend
-		if(Client.m_Friend)
-		{
-			vFriendIds.push_back(i);
-		}
-	}
-
-	// Send greet message to each friend via whisper
-	for(int FriendId : vFriendIds)
-	{
-		const char *pFriendName = GameClient()->m_aClients[FriendId].m_aName;
-		
-		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf), "/w %s %s", pFriendName, g_Config.m_TcAutoGreetMessage);
-		
-		// Send the message
-		GameClient()->m_Chat.SendChatQueued(aBuf);
-	}
 }

@@ -11,6 +11,21 @@ void CFriendNotify::OnInit()
 
 void CFriendNotify::OnRender()
 {
+	// Auto greet friends after joining (check every 60 frames ~ 1 second at 60fps)
+	if(!m_AutoGreetDone && g_Config.m_TcAutoGreetFriends && m_JoinTime > 0)
+	{
+		if(++m_GreetCheckCounter >= 60)
+		{
+			m_GreetCheckCounter = 0;
+			// Wait 3 seconds after joining to ensure we have player data
+			if(time() - m_JoinTime > time_freq() * 3)
+			{
+				AutoGreetFriends();
+				m_AutoGreetDone = true;
+			}
+		}
+	}
+
 	if(!g_Config.m_TcFriendOnlineNotify)
 		return;
 
@@ -60,4 +75,55 @@ void CFriendNotify::NotifyFriendOnline(const char *pName)
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "[TClient] Friend '%s' is now online!", pName);
 	GameClient()->m_Chat.AddLine(-2, 0, aBuf); // -2 = CLIENT_MSG (green)
+}
+
+void CFriendNotify::OnStateChange(int OldState, int NewState)
+{
+	// Reset auto greet when connecting
+	if(NewState == IClient::STATE_ONLINE)
+	{
+		m_AutoGreetDone = false;
+		m_JoinTime = time();
+		m_GreetCheckCounter = 0;
+	}
+}
+
+void CFriendNotify::AutoGreetFriends()
+{
+	if(!g_Config.m_TcAutoGreetFriends || g_Config.m_TcAutoGreetMessage[0] == '\0')
+		return;
+
+	int LocalId = GameClient()->m_Snap.m_LocalClientId;
+	if(LocalId < 0)
+		return;
+
+	// Find friends on current server
+	std::vector<int> vFriendIds;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(i == LocalId)
+			continue;
+
+		const CGameClient::CClientData &Client = GameClient()->m_aClients[i];
+		if(!Client.m_Active)
+			continue;
+
+		// Check if this player is a friend
+		if(Client.m_Friend)
+		{
+			vFriendIds.push_back(i);
+		}
+	}
+
+	// Send greet message to each friend via whisper
+	for(int FriendId : vFriendIds)
+	{
+		const char *pFriendName = GameClient()->m_aClients[FriendId].m_aName;
+		
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "/w %s %s", pFriendName, g_Config.m_TcAutoGreetMessage);
+		
+		// Send the message
+		GameClient()->m_Chat.SendChatQueued(aBuf);
+	}
 }

@@ -640,20 +640,6 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	DoSliderWithScaledValue(&g_Config.m_TcExecuteOnJoinDelay, &g_Config.m_TcExecuteOnJoinDelay, &Button, TCLocalize("Delay"), 140, 2000, 20, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, "ms");
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 
-	// Auto greet friends
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoGreetFriends, TCLocalize("Auto greet friends on join"), &g_Config.m_TcAutoGreetFriends, &Column, LineSize);
-	if(g_Config.m_TcAutoGreetFriends)
-	{
-		CUIRect Box;
-		Column.HSplitTop(LineSize + MarginExtraSmall, &Box, &Column);
-		Box.VSplitMid(&Label, &Button);
-		Ui()->DoLabel(&Label, Localize("Greet message"), FontSize, TEXTALIGN_ML);
-		static CLineInput s_GreetLineInput(g_Config.m_TcAutoGreetMessage, sizeof(g_Config.m_TcAutoGreetMessage));
-		s_GreetLineInput.SetEmptyText(TCLocalize("Hello!"));
-		Ui()->DoEditBox(&s_GreetLineInput, &Button, EditBoxFontSize);
-		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
-	}
-
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
 	// ***** Voting ***** //
@@ -856,6 +842,20 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 
 	// Friend Online Notification
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFriendOnlineNotify, TCLocalize("好友上线通知"), &g_Config.m_TcFriendOnlineNotify, &Column, LineSize);
+
+	// Auto greet friends on join
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoGreetFriends, TCLocalize("加入时自动问候好友"), &g_Config.m_TcAutoGreetFriends, &Column, LineSize);
+	if(g_Config.m_TcAutoGreetFriends)
+	{
+		CUIRect Box;
+		Column.HSplitTop(LineSize + MarginExtraSmall, &Box, &Column);
+		Box.VSplitMid(&Label, &Button);
+		Ui()->DoLabel(&Label, TCLocalize("问候消息"), FontSize, TEXTALIGN_ML);
+		static CLineInput s_GreetLineInput(g_Config.m_TcAutoGreetMessage, sizeof(g_Config.m_TcAutoGreetMessage));
+		s_GreetLineInput.SetEmptyText(TCLocalize("Hello!"));
+		Ui()->DoEditBox(&s_GreetLineInput, &Button, EditBoxFontSize);
+		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+	}
 
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
