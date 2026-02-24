@@ -76,26 +76,19 @@ int CAutoEmote::GetCurrentEmoteType()
 
 void CAutoEmote::SendEmote(int EmoteType)
 {
-	// Map emote type to emoticon ID
-	int EmoticonId = -1;
-	switch(EmoteType)
+	// Update local character's emote immediately for instant visual feedback
+	int LocalId = GameClient()->m_Snap.m_LocalClientId;
+	if(LocalId >= 0 && LocalId < MAX_CLIENTS)
 	{
-		case EMOTE_HAPPY: EmoticonId = EMOTICON_HEARTS; break;
-		case EMOTE_PAIN: EmoticonId = EMOTICON_SORRY; break;
-		case EMOTE_SURPRISE: EmoticonId = EMOTICON_EXCLAMATION; break;
-		case EMOTE_ANGRY: EmoticonId = EMOTICON_DEVILTEE; break;
-		case EMOTE_BLINK: EmoticonId = EMOTICON_DOTDOT; break;
-		case EMOTE_NORMAL: 
-		default: 
-			// For normal emote, we don't send anything (just reset to normal)
-			return;
+		CNetObj_Character *pChar = &GameClient()->m_aClients[LocalId].m_Snapped;
+		if(pChar)
+		{
+			pChar->m_Emote = EmoteType;
+		}
 	}
 	
-	if(EmoticonId >= 0)
-	{
-		// Send emoticon directly without chat cooldown
-		GameClient()->m_Emoticon.Emote(EmoticonId);
-	}
+	// Also try to send to server (may be delayed due to chat cooldown)
+	GameClient()->m_Emoticon.EyeEmote(EmoteType);
 }
 
 const char* CAutoEmote::GetEmoteCommand(int EmoteType)
