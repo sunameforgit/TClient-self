@@ -505,6 +505,48 @@ Console()->ExecuteLine(aBuf, -1);
 
 ---
 
+## 特效去重系统
+
+### 功能描述
+
+防止预测事件和服务器事件都触发时，特效播放两次的问题。
+
+### 实现文件
+
+- **头文件**: `src/game/client/components/effects.h`
+- **实现文件**: `src/game/client/components/effects.cpp`
+
+### 核心机制
+
+```cpp
+// 记录最近播放的特效
+struct CEffectRecord
+{
+    int m_Type;        // 特效类型 (0=爆炸, 1=锤击)
+    vec2 m_Pos;        // 位置
+    int64_t m_Time;    // 播放时间
+};
+
+// 检查是否最近播放过
+bool IsEffectRecentlyPlayed(int Type, vec2 Pos)
+{
+    // 100ms 内，16单位距离内的相同特效视为重复
+}
+```
+
+### 去重规则
+
+- **时间窗口**: 100ms 内
+- **距离阈值**: 16 单位内
+- **特效类型**: 分别记录爆炸(0)和锤击(1)
+
+### 修改的函数
+
+- `Explosion()` - 爆炸特效
+- `HammerHit()` - 锤击特效
+
+---
+
 ## 文件位置汇总
 
 | 功能 | 头文件 | 实现文件 |
@@ -512,6 +554,7 @@ Console()->ExecuteLine(aBuf, -1);
 | 皮肤窃取 | `src/game/client/components/tclient/skin_steal.h` | `src/game/client/components/tclient/skin_steal.cpp` |
 | 自动表情 | `src/game/client/components/tclient/auto_emote.h` | `src/game/client/components/tclient/auto_emote.cpp` |
 | 好友上线通知 | `src/game/client/components/tclient/friend_notify.h` | `src/game/client/components/tclient/friend_notify.cpp` |
+| 特效去重 | `src/game/client/components/effects.h` | `src/game/client/components/effects.cpp` |
 | 配置变量 | - | `src/engine/shared/config_variables_tclient.h` |
 | UI设置 | - | `src/game/client/components/tclient/menus_tclient.cpp` |
 | 快速输入 | - | `src/game/client/gameclient.cpp` |
@@ -522,7 +565,7 @@ Console()->ExecuteLine(aBuf, -1);
 ## 最后更新
 
 - **日期**: 2025-01-21
-- **版本**: TClient Custom Features v1.4
+- **版本**: TClient Custom Features v1.5
 - **更新内容**:
   - 修复 `/stealskin` 聊天命令（使用 `m_SkinSteal` 直接调用）
   - **重构锤子检测系统**（三重检测机制）：
@@ -538,3 +581,4 @@ Console()->ExecuteLine(aBuf, -1);
   - 添加好友上线通知功能文档
   - UI 文字汉化（自定义功能区块）
   - 调整自定义功能区块位置到右边列
+  - **添加特效去重系统**，防止锤击/爆炸特效播放两次
