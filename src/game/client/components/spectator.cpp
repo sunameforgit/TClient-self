@@ -91,6 +91,8 @@ void CSpectator::ConKeySpectator(IConsole::IResult *pResult, void *pUserData)
 
 	if(pSelf->GameClient()->m_Snap.m_SpecInfo.m_Active || pSelf->Client()->State() == IClient::STATE_DEMOPLAYBACK)
 		pSelf->m_Active = pResult->GetInteger(0) != 0;
+	else if(pResult->GetInteger(0) != 0) // Key pressed and not spectating - join spectators immediately
+		pSelf->GameClient()->SendSwitchTeam(TEAM_SPECTATORS);
 	else
 		pSelf->m_Active = false;
 }
