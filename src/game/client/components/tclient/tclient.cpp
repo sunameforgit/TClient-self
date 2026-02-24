@@ -670,14 +670,19 @@ void CTClient::OnNewSnapshot()
 {
 	SetForcedAspect();
 
-	// Auto greet friends after joining
+	// Auto greet friends after joining (check every 60 frames ~ 1 second at 60fps)
+	static int GreetCheckCounter = 0;
 	if(!m_AutoGreetDone && g_Config.m_TcAutoGreetFriends && m_JoinTime > 0)
 	{
-		// Wait 3 seconds after joining to ensure we have player data
-		if(time() - m_JoinTime > time_freq() * 3)
+		if(++GreetCheckCounter >= 60)
 		{
-			AutoGreetFriends();
-			m_AutoGreetDone = true;
+			GreetCheckCounter = 0;
+			// Wait 3 seconds after joining to ensure we have player data
+			if(time() - m_JoinTime > time_freq() * 3)
+			{
+				AutoGreetFriends();
+				m_AutoGreetDone = true;
+			}
 		}
 	}
 

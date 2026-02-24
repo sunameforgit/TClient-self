@@ -23,6 +23,10 @@ CEffects::CEffects()
 
 bool CEffects::IsEffectRecentlyPlayed(int Type, vec2 Pos)
 {
+	// Skip deduplication check if list is empty
+	if(m_RecentEffects.empty())
+		return false;
+
 	const int64_t Now = time();
 	const float DISTANCE_THRESHOLD = 16.0f; // Same position within 16 units
 
@@ -42,11 +46,17 @@ void CEffects::RecordEffect(int Type, vec2 Pos)
 {
 	const int64_t Now = time();
 
-	// Remove old records
-	while(!m_RecentEffects.empty() &&
-	      (Now - m_RecentEffects.front().m_Time) > EFFECT_DEDUP_TIME)
+	// Only cleanup old records periodically (every 16 effects or when list is full)
+	static int CleanupCounter = 0;
+	if(++CleanupCounter >= 16 || m_RecentEffects.size() >= MAX_RECORDS)
 	{
-		m_RecentEffects.pop_front();
+		CleanupCounter = 0;
+		// Remove old records
+		while(!m_RecentEffects.empty() &&
+		      (Now - m_RecentEffects.front().m_Time) > EFFECT_DEDUP_TIME)
+		{
+			m_RecentEffects.pop_front();
+		}
 	}
 
 	// Add new record
@@ -56,8 +66,8 @@ void CEffects::RecordEffect(int Type, vec2 Pos)
 	Record.m_Time = Now;
 	m_RecentEffects.push_back(Record);
 
-	// Limit records size
-	while(m_RecentEffects.size() > MAX_RECORDS)
+	// Hard limit - remove oldest if still over limit
+	if(m_RecentEffects.size() > MAX_RECORDS)
 	{
 		m_RecentEffects.pop_front();
 	}
