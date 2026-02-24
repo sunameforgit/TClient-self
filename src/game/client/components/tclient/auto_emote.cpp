@@ -2,6 +2,7 @@
 
 #include <engine/shared/config.h>
 #include <game/client/gameclient.h>
+#include <game/client/components/emoticon.h>
 
 void CAutoEmote::OnInit()
 {
@@ -75,18 +76,25 @@ int CAutoEmote::GetCurrentEmoteType()
 
 void CAutoEmote::SendEmote(int EmoteType)
 {
-	const char *pCmd = GetEmoteCommand(EmoteType);
-	if(pCmd)
+	// Map emote type to emoticon ID
+	int EmoticonId = -1;
+	switch(EmoteType)
 	{
-		// Use chat command to send emote (like in emoticon.cpp)
-		// Duration is half of interval for seamless switching
-		int Duration = g_Config.m_TcAutoEmoteInterval / 2;
-		if(Duration < 100) Duration = 100; // Minimum 100ms
-		if(Duration > 3000) Duration = 3000; // Maximum 3s
-		
-		char aBuf[64];
-		str_format(aBuf, sizeof(aBuf), "/emote %s %d", pCmd, Duration);
-		GameClient()->m_Chat.SendChatQueued(aBuf);
+		case EMOTE_HAPPY: EmoticonId = EMOTICON_HEARTS; break;
+		case EMOTE_PAIN: EmoticonId = EMOTICON_SORRY; break;
+		case EMOTE_SURPRISE: EmoticonId = EMOTICON_EXCLAMATION; break;
+		case EMOTE_ANGRY: EmoticonId = EMOTICON_DEVILTEE; break;
+		case EMOTE_BLINK: EmoticonId = EMOTICON_DOTDOT; break;
+		case EMOTE_NORMAL: 
+		default: 
+			// For normal emote, we don't send anything (just reset to normal)
+			return;
+	}
+	
+	if(EmoticonId >= 0)
+	{
+		// Send emoticon directly without chat cooldown
+		GameClient()->m_Emoticon.Emote(EmoticonId);
 	}
 }
 
