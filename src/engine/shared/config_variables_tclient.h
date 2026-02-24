@@ -262,6 +262,10 @@ MACRO_CONFIG_STR(TcExecuteOnConnect, tc_execute_on_connect, 100, "", CFGFLAG_CLI
 MACRO_CONFIG_STR(TcExecuteOnJoin, tc_execute_on_join, 100, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 MACRO_CONFIG_INT(TcExecuteOnJoinDelay, tc_execute_on_join_delay, 2, 7, 50000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Tick delay before executing tc_execute_on_join")
 
+// Auto greet friends on join
+MACRO_CONFIG_INT(TcAutoGreetFriends, tc_auto_greet_friends, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically greet friends when joining a server")
+MACRO_CONFIG_STR(TcAutoGreetMessage, tc_auto_greet_message, 128, "Hello!", CFGFLAG_CLIENT | CFGFLAG_SAVE, "Message to send when greeting friends")
+
 // Custom Communities
 MACRO_CONFIG_STR(TcCustomCommunitiesUrl, tc_custom_communities_url, 256, "https://raw.githubusercontent.com/SollyBunny/ddnet-custom-communities/refs/heads/main/custom-communities-ddnet-info.json", CFGFLAG_CLIENT | CFGFLAG_SAVE, "URL to fetch custom communities from (must be https), empty to disable")
 

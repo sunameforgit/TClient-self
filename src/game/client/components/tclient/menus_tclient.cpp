@@ -639,6 +639,21 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	Column.HSplitTop(LineSize, &Button, &Column);
 	DoSliderWithScaledValue(&g_Config.m_TcExecuteOnJoinDelay, &g_Config.m_TcExecuteOnJoinDelay, &Button, TCLocalize("Delay"), 140, 2000, 20, &CUi::ms_LinearScrollbarScale, CUi::SCROLLBAR_OPTION_NOCLAMPVALUE, "ms");
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+
+	// Auto greet friends
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoGreetFriends, TCLocalize("Auto greet friends on join"), &g_Config.m_TcAutoGreetFriends, &Column, LineSize);
+	if(g_Config.m_TcAutoGreetFriends)
+	{
+		CUIRect Box;
+		Column.HSplitTop(LineSize + MarginExtraSmall, &Box, &Column);
+		Box.VSplitMid(&Label, &Button);
+		Ui()->DoLabel(&Label, Localize("Greet message"), FontSize, TEXTALIGN_ML);
+		static CLineInput s_GreetLineInput(g_Config.m_TcAutoGreetMessage, sizeof(g_Config.m_TcAutoGreetMessage));
+		s_GreetLineInput.SetEmptyText(TCLocalize("Hello!"));
+		Ui()->DoEditBox(&s_GreetLineInput, &Button, EditBoxFontSize);
+		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+	}
+
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
 	// ***** Voting ***** //
