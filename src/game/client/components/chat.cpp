@@ -1525,6 +1525,10 @@ void CChat::SendChatQueued(const char *pLine)
 
 	if(AddEntry)
 	{
+		// Skip adding emote commands to history (so Up key shows normal chat messages)
+		if(str_startswith(pLine, "/emote"))
+			return;
+
 		const int Length = str_length(pLine);
 		CHistoryEntry *pEntry = m_History.Allocate(sizeof(CHistoryEntry) + Length);
 		pEntry->m_Team = m_Mode == MODE_ALL ? 0 : 1;
