@@ -844,7 +844,7 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcFriendOnlineNotify, TCLocalize("好友上线通知"), &g_Config.m_TcFriendOnlineNotify, &Column, LineSize);
 
 	// Auto greet friends on join
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoGreetFriends, TCLocalize("加入时自动问候好友"), &g_Config.m_TcAutoGreetFriends, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcAutoGreetFriends, TCLocalize("自动问候好友"), &g_Config.m_TcAutoGreetFriends, &Column, LineSize);
 	if(g_Config.m_TcAutoGreetFriends)
 	{
 		CUIRect Box;
